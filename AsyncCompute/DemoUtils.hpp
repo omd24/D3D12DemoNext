@@ -1,1 +1,453 @@
 #pragma once
+
+//---------------------------------------------------------------------------//
+// Disable warnings:
+//---------------------------------------------------------------------------//
+//
+#pragma warning(disable : 28182) // pointer might be null
+
+//---------------------------------------------------------------------------//
+// Includes:
+//---------------------------------------------------------------------------//
+//
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+
+#include <comdef.h>
+#include <d3d12.h>
+#include <d3dcompiler.h>
+#include <dxgi1_4.h>
+#include "Externals/dxcapi.use.h"
+#include <wrl.h>
+#include <locale>
+#include <codecvt>
+
+//---------------------------------------------------------------------------//
+// Smart COM ptr definitions:
+//---------------------------------------------------------------------------//
+// 
+#define MAKE_SMART_COM_PTR(_a) _COM_SMARTPTR_TYPEDEF(_a, __uuidof(_a))
+MAKE_SMART_COM_PTR(ID3D12Device5);
+MAKE_SMART_COM_PTR(ID3D12GraphicsCommandList4);
+MAKE_SMART_COM_PTR(ID3D12CommandQueue);
+MAKE_SMART_COM_PTR(IDXGISwapChain3);
+MAKE_SMART_COM_PTR(IDXGIFactory4);
+MAKE_SMART_COM_PTR(IDXGIAdapter1);
+MAKE_SMART_COM_PTR(ID3D12Fence);
+MAKE_SMART_COM_PTR(ID3D12CommandAllocator);
+MAKE_SMART_COM_PTR(ID3D12Resource);
+MAKE_SMART_COM_PTR(ID3D12DescriptorHeap);
+MAKE_SMART_COM_PTR(ID3D12Debug);
+MAKE_SMART_COM_PTR(ID3D12StateObject);
+MAKE_SMART_COM_PTR(ID3D12RootSignature);
+MAKE_SMART_COM_PTR(ID3DBlob);
+MAKE_SMART_COM_PTR(IDxcBlobEncoding);
+
+//---------------------------------------------------------------------------//
+// Common alias-declaration:
+//---------------------------------------------------------------------------//
+//
+using I32 = int32_t;
+using I64 = int64_t;
+using U32 = uint32_t;
+using U64 = uint64_t;
+
+//---------------------------------------------------------------------------//
+// Helper macros:
+//---------------------------------------------------------------------------//
+//
+#define D3D_SAFE_RELEASE(p)                                                    \
+  {                                                                            \
+    if (p)                                                                     \
+      (p)->Release()                                                           \
+  }
+
+#define D3D_ASSERT_HRESULT(x)                                                   \
+  { assert(SUCCEEDED(x) && "HRESULT != SUCCEEDED"); }
+
+#define D3D_EXEC_CHECKED(x)                                                    \
+  {                                                                            \
+    HRESULT hr_ = x;                                                           \
+    if (FAILED(hr_)) {                                                         \
+      traceHr(#x, hr_);                                                        \
+    }                                                                          \
+  }
+
+#define DEBUG_BREAK(expr)                                                      \
+  if (!(expr)) {                                                               \
+    __debugbreak();                                                            \
+  }
+
+//---------------------------------------------------------------------------//
+// Helper functions:
+//---------------------------------------------------------------------------//
+//
+// Align p_Val to the next multiple of p_Alignment
+template <typename T>
+inline T alignUp(T p_Val, T p_Alignment) {
+  return (p_Val + p_Alignment - (T)1) & ~(p_Alignment - (T)1);
+}
+//---------------------------------------------------------------------------//
+// Align p_Val to the previous multiple of p_Alignment
+template <typename T>
+inline T alignDown(T p_Val, T p_Alignment) {
+  return p_Val & ~(p_Alignment - (T)1);
+}
+//---------------------------------------------------------------------------//
+inline UINT calculateConstantBufferByteSize(UINT p_ByteSize) {
+  // Constant buffer size is required to be aligned:
+  return alignUp<UINT>(
+      p_ByteSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+}
+//---------------------------------------------------------------------------//
+template <typename T>
+inline T divideRoundingUp(T p_Value1, T p_Value2) {
+  return (p_Value1 + p_Value2 - (T)1) / p_Value2;
+}
+//---------------------------------------------------------------------------//
+template <typename T>
+inline T lerp(const T& p_Begin, const T& p_End, float p_InterpolationValue) {
+  return (
+      T)(p_Begin * (1 - p_InterpolationValue) + p_End * p_InterpolationValue);
+}
+//---------------------------------------------------------------------------//
+template <typename T>
+inline T clamp(T p_Value, T p_Min, T p_Max) {
+  if (p_Value < p_Min) {
+    return p_Min;
+  } else if (p_Value > p_Max) {
+    return p_Max;
+  }
+  return p_Value;
+}
+//---------------------------------------------------------------------------//
+// Dispaly a Message Box
+inline void msgBox(const std::string& p_Msg) {
+  MessageBoxA(g_WinHandle, p_Msg.c_str(), "Error", MB_OK);
+}
+//---------------------------------------------------------------------------//
+// Trace an error and convert the msg to a human-readable string
+inline void traceHr(const std::string& p_Msg, HRESULT p_Hr) {
+  char hrMsg[512];
+  FormatMessageA(
+      FORMAT_MESSAGE_FROM_SYSTEM,
+      nullptr,
+      p_Hr,
+      0,
+      hrMsg,
+      ArrayCount32(hrMsg),
+      nullptr);
+  std::string errMsg = p_Msg + ".\nError! " + hrMsg;
+  msgBox(errMsg);
+}
+//---------------------------------------------------------------------------//
+// Convert a string to a wide-string
+inline std::wstring strToWideStr(const std::string& p_Str) {
+  std::wstring_convert<std::codecvt_utf8<WCHAR>> cvt;
+  std::wstring wStr = cvt.from_bytes(p_Str);
+  return wStr;
+}
+//---------------------------------------------------------------------------//
+// Convert a wide-string to a string
+inline std::string WideStrToStr(const std::wstring& p_WideStr) {
+  std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
+  std::string str = cvt.to_bytes(p_WideStr);
+  return str;
+}
+//---------------------------------------------------------------------------//
+// Convert a blob to a string
+template <typename BlobType>
+std::string convertBlobToString(BlobType* p_Blob) {
+  std::vector<char> infoLog(p_Blob->GetBufferSize() + 1);
+  memcpy(infoLog.data(), p_Blob->GetBufferPointer(), p_Blob->GetBufferSize());
+  infoLog[p_Blob->GetBufferSize()] = 0;
+  return std::string(infoLog.data());
+}
+//---------------------------------------------------------------------------//
+// Count the elements of an array:
+template <typename T, size_t N>
+constexpr size_t ArrayCount(T (&)[N]) {
+  return N;
+}
+//---------------------------------------------------------------------------//
+template <typename T, U32 N>
+constexpr U32 ArrayCount32(T (&)[N]) {
+  return N;
+}
+//---------------------------------------------------------------------------//
+namespace {
+HWND g_WinHandle = nullptr;
+//---------------------------------------------------------------------------//
+static LRESULT CALLBACK
+msgProc(HWND p_Wnd, UINT p_Msg, WPARAM p_WParam, LPARAM p_LParam) {
+  switch (p_Msg) {
+  case WM_CLOSE:
+    DestroyWindow(p_Wnd);
+    return 0;
+  case WM_DESTROY:
+    PostQuitMessage(0);
+    return 0;
+  case WM_KEYDOWN:
+    if (VK_ESCAPE == p_WParam)
+      PostQuitMessage(0);
+    return 0;
+  default:
+    return DefWindowProc(p_Wnd, p_Msg, p_WParam, p_LParam);
+  }
+}
+//---------------------------------------------------------------------------//
+inline HWND
+createWindow(const std::string& p_WinTitle, U32& p_Width, U32& p_Height) {
+  const WCHAR* className = L"D3D12WindowClass";
+  DWORD winStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME |
+                   WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+
+  // Register the window class
+  WNDCLASS wc = {};
+  wc.lpfnWndProc = msgProc;
+  wc.hInstance = GetModuleHandle(nullptr);
+  wc.lpszClassName = className;
+  if (RegisterClass(&wc) == 0) {
+    msgBox("RegisterClass() failed");
+    return nullptr;
+  }
+
+  // Window size we have is for client area, calculate actual window size
+  RECT r{0, 0, (LONG)p_Width, (LONG)p_Height};
+  AdjustWindowRect(&r, winStyle, false);
+
+  int windowWidth = r.right - r.left;
+  int windowHeight = r.bottom - r.top;
+
+  // create the window
+  std::wstring wTitle = strToWideStr(p_WinTitle);
+  HWND wnd = CreateWindowEx(
+      0,
+      className,
+      wTitle.c_str(),
+      winStyle,
+      CW_USEDEFAULT,
+      CW_USEDEFAULT,
+      windowWidth,
+      windowHeight,
+      nullptr,
+      nullptr,
+      wc.hInstance,
+      nullptr);
+  if (wnd == nullptr) {
+    msgBox("CreateWindowEx() failed");
+    return nullptr;
+  }
+
+  return wnd;
+}
+//---------------------------------------------------------------------------//
+typedef void (*onRenderFunc)(void);
+void msgLoop(onRenderFunc p_OnRender = nullptr) {
+  MSG msg;
+  while (1) {
+    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+      if (msg.message == WM_QUIT)
+        break;
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    } else {
+      if (p_OnRender)
+        p_OnRender();
+    }
+  }
+}
+//---------------------------------------------------------------------------//
+} // end namespace
+//---------------------------------------------------------------------------//
+inline void
+getAssetsPath(_Out_writes_(p_PathSize) WCHAR* p_Path, UINT p_PathSize) {
+  DEBUG_BREAK(p_Path);
+
+  DWORD size = GetModuleFileName(nullptr, p_Path, p_PathSize);
+  DEBUG_BREAK(0 == size || size == p_PathSize);
+
+  WCHAR* lastSlash = wcsrchr(p_Path, L'\\');
+  if (lastSlash) {
+    *(lastSlash + 1) = L'\0';
+  }
+}
+//---------------------------------------------------------------------------//
+inline HRESULT
+readDataFromFile(LPCWSTR p_Filename, byte** p_Data, UINT* p_Size) {
+  using namespace Microsoft::WRL;
+
+#if WINVER >= _WIN32_WINNT_WIN8
+  CREATEFILE2_EXTENDED_PARAMETERS extendedParams = {};
+  extendedParams.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+  extendedParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+  extendedParams.dwFileFlags = FILE_FLAG_SEQUENTIAL_SCAN;
+  extendedParams.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+  extendedParams.lpSecurityAttributes = nullptr;
+  extendedParams.hTemplateFile = nullptr;
+
+  Wrappers::FileHandle file(CreateFile2(
+      p_Filename,
+      GENERIC_READ,
+      FILE_SHARE_READ,
+      OPEN_EXISTING,
+      &extendedParams));
+#else
+  Wrappers::FileHandle file(CreateFile(
+      filename,
+      GENERIC_READ,
+      FILE_SHARE_READ,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN |
+          SECURITY_SQOS_PRESENT | SECURITY_ANONYMOUS,
+      nullptr));
+#endif
+  if (file.Get() == INVALID_HANDLE_VALUE) {
+    throw std::exception();
+  }
+
+  FILE_STANDARD_INFO fileInfo = {};
+  DEBUG_BREAK(!GetFileInformationByHandleEx(
+      file.Get(), FileStandardInfo, &fileInfo, sizeof(fileInfo)));
+
+  DEBUG_BREAK(fileInfo.EndOfFile.HighPart != 0);
+
+  *p_Data = reinterpret_cast<byte*>(malloc(fileInfo.EndOfFile.LowPart));
+  *p_Size = fileInfo.EndOfFile.LowPart;
+
+  DEBUG_BREAK(!ReadFile(
+      file.Get(), *p_Data, fileInfo.EndOfFile.LowPart, nullptr, nullptr));
+
+  return S_OK;
+}
+//---------------------------------------------------------------------------//
+inline HRESULT readDataFromDDSFile(
+    LPCWSTR p_Filename, byte** p_Data, UINT* p_Offset, UINT* p_Size) {
+  D3D_ASSERT_HRESULT(readDataFromFile(p_Filename, p_Data, p_Size));
+
+  // DDS files always start with the same magic number.
+  static const UINT DDS_MAGIC = 0x20534444;
+  UINT magicNumber = *reinterpret_cast<const UINT*>(*p_Data);
+  if (magicNumber != DDS_MAGIC) {
+    return E_FAIL;
+  }
+
+  struct DDS_PIXELFORMAT {
+    UINT size;
+    UINT flags;
+    UINT fourCC;
+    UINT rgbBitCount;
+    UINT rBitMask;
+    UINT gBitMask;
+    UINT bBitMask;
+    UINT aBitMask;
+  };
+
+  struct DDS_HEADER {
+    UINT size;
+    UINT flags;
+    UINT height;
+    UINT width;
+    UINT pitchOrLinearSize;
+    UINT depth;
+    UINT mipMapCount;
+    UINT reserved1[11];
+    DDS_PIXELFORMAT ddsPixelFormat;
+    UINT caps;
+    UINT caps2;
+    UINT caps3;
+    UINT caps4;
+    UINT reserved2;
+  };
+
+  auto ddsHeader = reinterpret_cast<const DDS_HEADER*>(*p_Data + sizeof(UINT));
+  if (ddsHeader->size != sizeof(DDS_HEADER) ||
+      ddsHeader->ddsPixelFormat.size != sizeof(DDS_PIXELFORMAT)) {
+    return E_FAIL;
+  }
+
+  const ptrdiff_t ddsDataOffset = sizeof(UINT) + sizeof(DDS_HEADER);
+  *p_Offset = ddsDataOffset;
+  *p_Size = *p_Size - ddsDataOffset;
+
+  return S_OK;
+}
+//---------------------------------------------------------------------------//
+// Assign a name to the object to aid with debugging.
+#if defined(_DEBUG) || defined(DBG)
+inline void setName(ID3D12Object* p_Object, LPCWSTR p_Name) {
+  p_Object->SetName(p_Name);
+}
+inline void setNameIndexed(ID3D12Object* pObject, LPCWSTR name, UINT index) {
+  WCHAR fullName[50];
+  if (swprintf_s(fullName, L"%s[%u]", name, index) > 0) {
+    pObject->SetName(fullName);
+  }
+}
+#else
+inline void setName(ID3D12Object*, LPCWSTR) {}
+inline void setNameIndexed(ID3D12Object*, LPCWSTR, UINT) {}
+#endif
+//---------------------------------------------------------------------------//
+// Naming helper for ComPtr<T>.
+// Assigns the name of the variable as the name of the object.
+// The indexed variant will include the index in the name of the object.
+#define NAME_D3D12_OBJECT(x) setName((x).Get(), L#x)
+#define NAME_D3D12_OBJECT_INDEXED(x, n) setNameIndexed((x)[n].Get(), L#x, n)
+//---------------------------------------------------------------------------//
+#ifdef D3D_COMPILE_STANDARD_FILE_INCLUDE
+inline ID3DBlobPtr compileShader(
+    const std::wstring& p_Filename,
+    const D3D_SHADER_MACRO* p_Defines,
+    const std::string& p_Entrypoint,
+    const std::string& p_Target) {
+  UINT compileFlags = 0;
+#if defined(_DEBUG) || defined(DBG)
+  compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+  HRESULT hr;
+  ID3DBlobPtr byteCode = nullptr;
+  ID3DBlobPtr errors;
+  hr = D3DCompileFromFile(
+      p_Filename.c_str(),
+      p_Defines,
+      D3D_COMPILE_STANDARD_FILE_INCLUDE,
+      p_Entrypoint.c_str(),
+      p_Target.c_str(),
+      compileFlags,
+      0,
+      &byteCode,
+      &errors);
+
+  if (errors != nullptr) {
+    OutputDebugStringA((char*)errors->GetBufferPointer());
+  }
+  D3D_ASSERT_HRESULT(hr);
+
+  return byteCode;
+}
+#endif
+//---------------------------------------------------------------------------//
+// Resets all elements in a ComPtr array
+template <typename T>
+inline void resetComPtrArray(T* comPtrArray) {
+  for (auto& i : *comPtrArray) {
+    i.Reset();
+  }
+}
+//---------------------------------------------------------------------------//
+// Resets all elements in a unique_ptr array
+template <typename T>
+inline void resetUniquePtrArray(T* uniquePtrArray) {
+  for (auto& i : *uniquePtrArray) {
+    i.reset();
+  }
+}
+//---------------------------------------------------------------------------//
