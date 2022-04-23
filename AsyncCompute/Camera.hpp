@@ -32,14 +32,14 @@ struct Camera {
   } m_KeysPressed;
 };
 //---------------------------------------------------------------------------//
-inline void cameraReset(Camera *p_Camera) {
+inline void cameraReset(Camera* p_Camera) {
   p_Camera->m_Position = p_Camera->m_InitialPosition;
   p_Camera->m_Yaw = XM_PI;
   p_Camera->m_Pitch = 0.0f;
   p_Camera->m_LookDirection = {0, 0, -1};
 }
 //---------------------------------------------------------------------------//
-inline void cameraInit(Camera *p_Camera, XMFLOAT3 p_Position) {
+inline void cameraInit(Camera* p_Camera, XMFLOAT3 p_Position) {
   memset(p_Camera, 0, sizeof(*p_Camera));
   p_Camera->m_LookDirection = XMFLOAT3(0, 0, -1);
   p_Camera->m_InitialPosition = p_Position;
@@ -59,14 +59,14 @@ inline XMMATRIX getProjectionMatrix(
       p_Fov, p_AspectRatio, p_NearPlane, p_FarPlane);
 }
 //---------------------------------------------------------------------------//
-inline XMMATRIX cameraGetViewMatrix(Camera *p_Camera) {
+inline XMMATRIX cameraGetViewMatrix(Camera* p_Camera) {
   return XMMatrixLookToRH(
       XMLoadFloat3(&p_Camera->m_Position),
       XMLoadFloat3(&p_Camera->m_LookDirection),
       XMLoadFloat3(&p_Camera->m_UpDirection));
 }
 //---------------------------------------------------------------------------//
-inline void cameraOnKeyDown(Camera *p_Camera, WPARAM p_Key) {
+inline void cameraOnKeyDown(Camera* p_Camera, WPARAM p_Key) {
   switch (p_Key) {
   case 'W':
     p_Camera->m_KeysPressed.w = true;
@@ -98,7 +98,7 @@ inline void cameraOnKeyDown(Camera *p_Camera, WPARAM p_Key) {
   }
 }
 //---------------------------------------------------------------------------//
-inline void cameraOnKeyUp(Camera *p_Camera, WPARAM p_Key) {
+inline void cameraOnKeyUp(Camera* p_Camera, WPARAM p_Key) {
   switch (p_Key) {
   case 'W':
     p_Camera->m_KeysPressed.w = false;
@@ -127,7 +127,7 @@ inline void cameraOnKeyUp(Camera *p_Camera, WPARAM p_Key) {
   }
 }
 //---------------------------------------------------------------------------//
-inline void cameraUpdate(Camera *p_Camera, float p_ElapsedSeconds) {
+inline void cameraUpdate(Camera* p_Camera, float p_ElapsedSeconds) {
   // Update move vector in view space:
   XMFLOAT3 move(0, 0, 0);
 

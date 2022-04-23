@@ -24,3 +24,5 @@ AlignAfterOpenBracket: AlwaysBreak
 BinPackArguments: false
 BinPackParameters: false
 FixNamespaceComments: true
+AlwaysBreakTemplateDeclarations : true 
+PointerAlignment: Left

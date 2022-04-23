@@ -32,7 +32,7 @@ struct Timer {
   UINT64 m_TargetElapsedTicks;
 };
 //---------------------------------------------------------------------------//
-inline void timerInit(Timer *p_Timer) {
+inline void timerInit(Timer* p_Timer) {
   memset(p_Timer, 0, sizeof(*p_Timer));
   p_Timer->m_FramesThisSecond = false;
   p_Timer->m_TargetElapsedTicks = TicksPerSecond / 60;
@@ -52,22 +52,22 @@ static UINT64 secondsToTicks(double p_Seconds) {
   return static_cast<UINT64>(p_Seconds * TicksPerSecond);
 }
 //---------------------------------------------------------------------------//
-inline double timerGetElapsedSeconds(Timer *p_Timer) {
+inline double timerGetElapsedSeconds(Timer* p_Timer) {
   return ticksToSeconds(p_Timer->m_ElapsedTicks);
 }
 //---------------------------------------------------------------------------//
-inline double timerGetTotalSeconds(Timer *p_Timer) {
+inline double timerGetTotalSeconds(Timer* p_Timer) {
   return ticksToSeconds(p_Timer->m_TotalTicks);
 }
 //---------------------------------------------------------------------------//
 inline void
-timerSetTargetElapsedSeconds(Timer *p_Timer, double p_TargetElapsed) {
+timerSetTargetElapsedSeconds(Timer* p_Timer, double p_TargetElapsed) {
   p_Timer->m_TargetElapsedTicks = secondsToTicks(p_TargetElapsed);
 }
 //---------------------------------------------------------------------------//
 // Call this after an intentional timing discontinuity, e.g., a blocking IO op,
 // to avoid having the fixed timestep logic attempt catch-up update calls
-inline void timerResetElapsedTime(Timer *p_Timer) {
+inline void timerResetElapsedTime(Timer* p_Timer) {
   QueryPerformanceCounter(&p_Timer->m_QpcLastTime);
 
   p_Timer->m_LeftOverTicks = 0;
@@ -78,7 +78,7 @@ inline void timerResetElapsedTime(Timer *p_Timer) {
 //---------------------------------------------------------------------------//
 typedef void (*updateFuncCallback)(void);
 // Update Timer state, calling the specified update callback if needed
-void Tick(Timer *p_Timer, updateFuncCallback p_Update = nullptr) {
+void Tick(Timer* p_Timer, updateFuncCallback p_Update = nullptr) {
   LARGE_INTEGER currentTime;
   QueryPerformanceCounter(&currentTime);
 
