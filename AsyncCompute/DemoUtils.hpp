@@ -1,5 +1,7 @@
 #pragma once
 
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+
 //---------------------------------------------------------------------------//
 // Disable warnings:
 //---------------------------------------------------------------------------//
@@ -20,6 +22,7 @@
 
 #include <comdef.h>
 #include <d3d12.h>
+#include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <dxgi1_4.h>
 #include "Externals/dxcapi.use.h"
@@ -30,13 +33,14 @@
 //---------------------------------------------------------------------------//
 // Smart COM ptr definitions:
 //---------------------------------------------------------------------------//
-// 
+//
 #define MAKE_SMART_COM_PTR(_a) _COM_SMARTPTR_TYPEDEF(_a, __uuidof(_a))
 MAKE_SMART_COM_PTR(ID3D12Device5);
 MAKE_SMART_COM_PTR(ID3D12GraphicsCommandList4);
 MAKE_SMART_COM_PTR(ID3D12CommandQueue);
 MAKE_SMART_COM_PTR(IDXGISwapChain3);
 MAKE_SMART_COM_PTR(IDXGIFactory4);
+MAKE_SMART_COM_PTR(IDXGIFactory6);
 MAKE_SMART_COM_PTR(IDXGIAdapter1);
 MAKE_SMART_COM_PTR(ID3D12Fence);
 MAKE_SMART_COM_PTR(ID3D12CommandAllocator);
@@ -67,7 +71,7 @@ using U64 = uint64_t;
       (p)->Release()                                                           \
   }
 
-#define D3D_ASSERT_HRESULT(x)                                                   \
+#define D3D_ASSERT_HRESULT(x)                                                  \
   { assert(SUCCEEDED(x) && "HRESULT != SUCCEEDED"); }
 
 #define D3D_EXEC_CHECKED(x)                                                    \
@@ -126,26 +130,6 @@ inline T clamp(T p_Value, T p_Min, T p_Max) {
   return p_Value;
 }
 //---------------------------------------------------------------------------//
-// Dispaly a Message Box
-inline void msgBox(const std::string& p_Msg) {
-  MessageBoxA(g_WinHandle, p_Msg.c_str(), "Error", MB_OK);
-}
-//---------------------------------------------------------------------------//
-// Trace an error and convert the msg to a human-readable string
-inline void traceHr(const std::string& p_Msg, HRESULT p_Hr) {
-  char hrMsg[512];
-  FormatMessageA(
-      FORMAT_MESSAGE_FROM_SYSTEM,
-      nullptr,
-      p_Hr,
-      0,
-      hrMsg,
-      ArrayCount32(hrMsg),
-      nullptr);
-  std::string errMsg = p_Msg + ".\nError! " + hrMsg;
-  msgBox(errMsg);
-}
-//---------------------------------------------------------------------------//
 // Convert a string to a wide-string
 inline std::wstring strToWideStr(const std::string& p_Str) {
   std::wstring_convert<std::codecvt_utf8<WCHAR>> cvt;
@@ -171,99 +155,14 @@ std::string convertBlobToString(BlobType* p_Blob) {
 //---------------------------------------------------------------------------//
 // Count the elements of an array:
 template <typename T, size_t N>
-constexpr size_t ArrayCount(T (&)[N]) {
+constexpr size_t arrayCount(T (&)[N]) {
   return N;
 }
 //---------------------------------------------------------------------------//
 template <typename T, U32 N>
-constexpr U32 ArrayCount32(T (&)[N]) {
+constexpr U32 arrayCount32(T (&)[N]) {
   return N;
 }
-//---------------------------------------------------------------------------//
-namespace {
-HWND g_WinHandle = nullptr;
-//---------------------------------------------------------------------------//
-static LRESULT CALLBACK
-msgProc(HWND p_Wnd, UINT p_Msg, WPARAM p_WParam, LPARAM p_LParam) {
-  switch (p_Msg) {
-  case WM_CLOSE:
-    DestroyWindow(p_Wnd);
-    return 0;
-  case WM_DESTROY:
-    PostQuitMessage(0);
-    return 0;
-  case WM_KEYDOWN:
-    if (VK_ESCAPE == p_WParam)
-      PostQuitMessage(0);
-    return 0;
-  default:
-    return DefWindowProc(p_Wnd, p_Msg, p_WParam, p_LParam);
-  }
-}
-//---------------------------------------------------------------------------//
-inline HWND
-createWindow(const std::string& p_WinTitle, U32& p_Width, U32& p_Height) {
-  const WCHAR* className = L"D3D12WindowClass";
-  DWORD winStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME |
-                   WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
-
-  // Register the window class
-  WNDCLASS wc = {};
-  wc.lpfnWndProc = msgProc;
-  wc.hInstance = GetModuleHandle(nullptr);
-  wc.lpszClassName = className;
-  if (RegisterClass(&wc) == 0) {
-    msgBox("RegisterClass() failed");
-    return nullptr;
-  }
-
-  // Window size we have is for client area, calculate actual window size
-  RECT r{0, 0, (LONG)p_Width, (LONG)p_Height};
-  AdjustWindowRect(&r, winStyle, false);
-
-  int windowWidth = r.right - r.left;
-  int windowHeight = r.bottom - r.top;
-
-  // create the window
-  std::wstring wTitle = strToWideStr(p_WinTitle);
-  HWND wnd = CreateWindowEx(
-      0,
-      className,
-      wTitle.c_str(),
-      winStyle,
-      CW_USEDEFAULT,
-      CW_USEDEFAULT,
-      windowWidth,
-      windowHeight,
-      nullptr,
-      nullptr,
-      wc.hInstance,
-      nullptr);
-  if (wnd == nullptr) {
-    msgBox("CreateWindowEx() failed");
-    return nullptr;
-  }
-
-  return wnd;
-}
-//---------------------------------------------------------------------------//
-typedef void (*onRenderFunc)(void);
-void msgLoop(onRenderFunc p_OnRender = nullptr) {
-  MSG msg;
-  while (1) {
-    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-      if (msg.message == WM_QUIT)
-        break;
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
-    } else {
-      if (p_OnRender)
-        p_OnRender();
-    }
-  }
-}
-//---------------------------------------------------------------------------//
-} // end namespace
 //---------------------------------------------------------------------------//
 inline void
 getAssetsPath(_Out_writes_(p_PathSize) WCHAR* p_Path, UINT p_PathSize) {
@@ -449,5 +348,71 @@ inline void resetUniquePtrArray(T* uniquePtrArray) {
   for (auto& i : *uniquePtrArray) {
     i.reset();
   }
+}
+//---------------------------------------------------------------------------//
+inline void getHardwareAdapter(
+    _In_ IDXGIFactory1* p_Factory,
+    _Outptr_result_maybenull_ IDXGIAdapter1** p_Adapter,
+    bool p_RequestHighPerformanceAdapter = false) {
+  *p_Adapter = nullptr;
+
+  IDXGIAdapter1Ptr adapter;
+
+  IDXGIFactory6Ptr factory6;
+  if (SUCCEEDED(p_Factory->QueryInterface(IID_PPV_ARGS(&factory6)))) {
+    for (UINT adapterIndex = 0; SUCCEEDED(factory6->EnumAdapterByGpuPreference(
+             adapterIndex,
+             p_RequestHighPerformanceAdapter == true
+                 ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE
+                 : DXGI_GPU_PREFERENCE_UNSPECIFIED,
+             IID_PPV_ARGS(&adapter)));
+         ++adapterIndex) {
+      DXGI_ADAPTER_DESC1 desc;
+      adapter->GetDesc1(&desc);
+
+      if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
+        // Don't select the Basic Render Driver adapter.
+        // If you want a software adapter, pass in "/warp" on the command line.
+        continue;
+      }
+
+      // Check to see whether the adapter supports Direct3D 12, but don't create
+      // the actual device yet.
+      if (SUCCEEDED(D3D12CreateDevice(
+              adapter.GetInterfacePtr(),
+              D3D_FEATURE_LEVEL_11_0,
+              _uuidof(ID3D12Device),
+              nullptr))) {
+        break;
+      }
+    }
+  }
+
+  if (adapter.GetInterfacePtr() == nullptr) {
+    for (UINT adapterIndex = 0;
+         SUCCEEDED(p_Factory->EnumAdapters1(adapterIndex, &adapter));
+         ++adapterIndex) {
+      DXGI_ADAPTER_DESC1 desc;
+      adapter->GetDesc1(&desc);
+
+      if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) {
+        // Don't select the Basic Render Driver adapter.
+        // If you want a software adapter, pass in "/warp" on the command line.
+        continue;
+      }
+
+      // Check to see whether the adapter supports Direct3D 12, but don't create
+      // the actual device yet.
+      if (SUCCEEDED(D3D12CreateDevice(
+              adapter.GetInterfacePtr(),
+              D3D_FEATURE_LEVEL_11_0,
+              _uuidof(ID3D12Device),
+              nullptr))) {
+        break;
+      }
+    }
+  }
+
+  *p_Adapter = adapter.Detach();
 }
 //---------------------------------------------------------------------------//

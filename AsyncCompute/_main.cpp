@@ -1,5 +1,6 @@
 #include "Timer.hpp"
 #include "Camera.hpp"
+#include "DemoUtils.hpp"
 
 int main() {
 
