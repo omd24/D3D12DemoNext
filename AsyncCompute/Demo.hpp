@@ -1,7 +1,9 @@
 #pragma once
 
-#include "WndMgr.hpp"
+#include "DemoUtils.hpp"
 
+//---------------------------------------------------------------------------//
+// Demo context:
 //---------------------------------------------------------------------------//
 struct Demo {
   // Viewport dimensions
@@ -21,12 +23,7 @@ struct Demo {
   // Additional data goes here:
   //
 };
-//---------------------------------------------------------------------------//
-namespace {
 Demo* g_Demo = nullptr;
-
-//---------------------------------------------------------------------------//
-} // end namespace
 //---------------------------------------------------------------------------//
 inline void demoInit(UINT p_Width, UINT p_Height, std::wstring p_Name) {
   g_Demo->m_Width = p_Width;
@@ -45,8 +42,8 @@ inline void demoInit(UINT p_Width, UINT p_Height, std::wstring p_Name) {
 inline void demoUpdate() {}
 inline void demoRender() {}
 inline void demoDestroy() {}
-inline void demoKeyDown() {}
-inline void demoKeyUp() {}
+inline void demoKeyDown(UINT8) {}
+inline void demoKeyUp(UINT8) {}
 //---------------------------------------------------------------------------//
 inline void
 demoParseCommandLineArgs(_In_reads_(p_Argc) WCHAR* p_Argv[], int p_Argc) {

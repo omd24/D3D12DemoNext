@@ -146,10 +146,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.hpp" />
-    <ClInclude Include="DemoMgr.hpp" />
+    <ClInclude Include="Demo.hpp" />
     <ClInclude Include="DemoUtils.hpp" />
     <ClInclude Include="Timer.hpp" />
-    <ClInclude Include="WndMgr.hpp" />
+    <ClInclude Include="AppMgr.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />

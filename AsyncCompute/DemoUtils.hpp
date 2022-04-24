@@ -29,6 +29,7 @@
 #include <wrl.h>
 #include <locale>
 #include <codecvt>
+#include <shellapi.h>
 
 //---------------------------------------------------------------------------//
 // Smart COM ptr definitions:
@@ -415,4 +416,6 @@ inline void getHardwareAdapter(
 
   *p_Adapter = adapter.Detach();
 }
+//---------------------------------------------------------------------------//
+HWND g_WinHandle = nullptr;
 //---------------------------------------------------------------------------//

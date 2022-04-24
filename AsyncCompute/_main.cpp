@@ -1,6 +1,6 @@
 #include "Timer.hpp"
 #include "Camera.hpp"
-#include "DemoUtils.hpp"
+#include "AppMgr.hpp"
 
 int main() {
 
