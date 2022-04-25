@@ -1,6 +1,18 @@
 #pragma once
 
+/******************************************************************************
+ * \win32-based application manager responsible for running the demo
+ * \
+ ******************************************************************************/
+
 #include "Demo.hpp"
+
+//---------------------------------------------------------------------------//
+// Demo callbacks:
+//---------------------------------------------------------------------------//
+typedef void (*onInitFunc)(void);
+typedef void (*onUpdateFunc)(void);
+typedef void (*onRenderFunc)(void);
 
 //---------------------------------------------------------------------------//
 // Dispaly a Message Box
@@ -27,12 +39,12 @@ static LRESULT CALLBACK
 msgProc(HWND p_Wnd, UINT p_Message, WPARAM p_WParam, LPARAM p_LParam) {
   switch (p_Message) {
   case WM_CREATE: {
-    // Save the DXSample* passed in to CreateWindow.
-    LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(p_LParam);
+    // Save the data passed in to CreateWindow.
+    LPCREATESTRUCT createStruct = reinterpret_cast<LPCREATESTRUCT>(p_LParam);
     SetWindowLongPtr(
         p_Wnd,
         GWLP_USERDATA,
-        reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+        reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams));
   }
     return 0;
 
@@ -59,16 +71,9 @@ msgProc(HWND p_Wnd, UINT p_Message, WPARAM p_WParam, LPARAM p_LParam) {
     PostQuitMessage(0);
     return 0;
   }
-
-  // Handle any messages the switch statement didn't.
   return DefWindowProc(p_Wnd, p_Message, p_WParam, p_LParam);
 }
-//---------------------------------------------------------------------------//
-// Function callbacks:
-//---------------------------------------------------------------------------//
-typedef void (*onInitFunc)(void);
-typedef void (*onUpdateFunc)(void);
-typedef void (*onRenderFunc)(void);
+
 //---------------------------------------------------------------------------//
 // WinApi app manager:
 //---------------------------------------------------------------------------//
@@ -78,7 +83,7 @@ inline int appMgrRun(
     onRenderFunc p_OnInit = nullptr,
     onRenderFunc p_OnUpdate = nullptr,
     onRenderFunc p_OnRender = nullptr) {
-  DEBUG_BREAK(g_Demo != nullptr);
+  DEBUG_BREAK(g_Demo != nullptr && g_Demo->m_IsInitialized);
 
   // Parse the command line parameters
   int argc;
@@ -125,9 +130,9 @@ inline int appMgrRun(
     return 0;
   }
 
-  // Initialize the sample. OnInit is defined in each child-implementation of
-  // DXSample.
-  demoInit(1280, 720, L"D3D12 n-Body Gravity Simulation");
+  // Initialize the demo. OnInit is demo specific
+  if (p_OnInit)
+    p_OnInit();
 
   ShowWindow(g_WinHandle, p_CmdShow);
 

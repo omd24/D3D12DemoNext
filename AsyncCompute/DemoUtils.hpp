@@ -170,7 +170,7 @@ getAssetsPath(_Out_writes_(p_PathSize) WCHAR* p_Path, UINT p_PathSize) {
   DEBUG_BREAK(p_Path);
 
   DWORD size = GetModuleFileName(nullptr, p_Path, p_PathSize);
-  DEBUG_BREAK(0 == size || size == p_PathSize);
+  DEBUG_BREAK(0 != size || size != p_PathSize);
 
   WCHAR* lastSlash = wcsrchr(p_Path, L'\\');
   if (lastSlash) {

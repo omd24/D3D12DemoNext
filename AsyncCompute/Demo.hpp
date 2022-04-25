@@ -20,6 +20,9 @@ struct Demo {
   // Window title
   std::wstring m_Title;
 
+  // State info
+  bool m_IsInitialized;
+
   // Additional data goes here:
   //
 };
@@ -37,6 +40,8 @@ inline void demoInit(UINT p_Width, UINT p_Height, std::wstring p_Name) {
 
   g_Demo->m_AspectRatio =
       static_cast<float>(p_Width) / static_cast<float>(p_Height);
+
+  g_Demo->m_IsInitialized = true;
 }
 //---------------------------------------------------------------------------//
 inline void demoUpdate() {}
