@@ -1,5 +1,10 @@
 #pragma once
 
+/******************************************************************************
+ * \common utilities for a demo
+ * \
+ ******************************************************************************/
+
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
 //---------------------------------------------------------------------------//
@@ -92,13 +97,13 @@ using U64 = uint64_t;
 // Helper functions:
 //---------------------------------------------------------------------------//
 //
-// Align p_Val to the next multiple of p_Alignment
+// Aligns p_Val to the next multiple of p_Alignment
 template <typename T>
 inline T alignUp(T p_Val, T p_Alignment) {
   return (p_Val + p_Alignment - (T)1) & ~(p_Alignment - (T)1);
 }
 //---------------------------------------------------------------------------//
-// Align p_Val to the previous multiple of p_Alignment
+// Aligns p_Val to the previous multiple of p_Alignment
 template <typename T>
 inline T alignDown(T p_Val, T p_Alignment) {
   return p_Val & ~(p_Alignment - (T)1);
@@ -131,21 +136,21 @@ inline T clamp(T p_Value, T p_Min, T p_Max) {
   return p_Value;
 }
 //---------------------------------------------------------------------------//
-// Convert a string to a wide-string
+// Converts a string to a wide-string
 inline std::wstring strToWideStr(const std::string& p_Str) {
   std::wstring_convert<std::codecvt_utf8<WCHAR>> cvt;
   std::wstring wStr = cvt.from_bytes(p_Str);
   return wStr;
 }
 //---------------------------------------------------------------------------//
-// Convert a wide-string to a string
+// Converts a wide-string to a string
 inline std::string WideStrToStr(const std::wstring& p_WideStr) {
   std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
   std::string str = cvt.to_bytes(p_WideStr);
   return str;
 }
 //---------------------------------------------------------------------------//
-// Convert a blob to a string
+// Converts a blob to a string
 template <typename BlobType>
 std::string convertBlobToString(BlobType* p_Blob) {
   std::vector<char> infoLog(p_Blob->GetBufferSize() + 1);
@@ -154,7 +159,7 @@ std::string convertBlobToString(BlobType* p_Blob) {
   return std::string(infoLog.data());
 }
 //---------------------------------------------------------------------------//
-// Count the elements of an array:
+// Counts the elements of an array:
 template <typename T, size_t N>
 constexpr size_t arrayCount(T (&)[N]) {
   return N;
@@ -279,7 +284,7 @@ inline HRESULT readDataFromDDSFile(
   return S_OK;
 }
 //---------------------------------------------------------------------------//
-// Assign a name to the object to aid with debugging.
+// Assigns a name to the object to aid with debugging.
 #if defined(_DEBUG) || defined(DBG)
 inline void setName(ID3D12Object* p_Object, LPCWSTR p_Name) {
   p_Object->SetName(p_Name);
@@ -416,6 +421,61 @@ inline void getHardwareAdapter(
 
   *p_Adapter = adapter.Detach();
 }
+
 //---------------------------------------------------------------------------//
-HWND g_WinHandle = nullptr;
+// Basic demo data:
+//---------------------------------------------------------------------------//
+struct DemoInfo {
+  // Viewport dimensions
+  UINT m_Width;
+  UINT m_Height;
+  float m_AspectRatio;
+
+  // Adapter info
+  bool m_UseWarpDevice;
+
+  // Root assets path
+  std::wstring m_AssetsPath;
+
+  // Window title
+  std::wstring m_Title;
+
+  // State info
+  bool m_IsInitialized;
+
+  // Additional data goes here:
+  //
+};
+DemoInfo* g_DemoInfo = nullptr;
+//---------------------------------------------------------------------------//
+inline void demoInit(UINT p_Width, UINT p_Height, std::wstring p_Name) {
+  g_DemoInfo->m_Width = p_Width;
+  g_DemoInfo->m_Height = p_Height;
+  g_DemoInfo->m_Title = p_Name;
+  g_DemoInfo->m_UseWarpDevice = false;
+
+  WCHAR assetsPath[512];
+  getAssetsPath(assetsPath, _countof(assetsPath));
+  g_DemoInfo->m_AssetsPath = assetsPath;
+
+  g_DemoInfo->m_AspectRatio =
+      static_cast<float>(p_Width) / static_cast<float>(p_Height);
+
+  g_DemoInfo->m_IsInitialized = true;
+}
+//---------------------------------------------------------------------------//
+inline void
+demoParseCmdArgs(_In_reads_(p_Argc) WCHAR* p_Argv[], int p_Argc) {
+  for (int i = 1; i < p_Argc; ++i) {
+    if (_wcsnicmp(p_Argv[i], L"-warp", wcslen(p_Argv[i])) == 0 ||
+        _wcsnicmp(p_Argv[i], L"/warp", wcslen(p_Argv[i])) == 0) {
+      g_DemoInfo->m_UseWarpDevice = true;
+      g_DemoInfo->m_Title = g_DemoInfo->m_Title + L" (WARP)";
+    }
+  }
+}
+//---------------------------------------------------------------------------//
+inline std::wstring demoGetAssetPath(LPCWSTR p_AssetName) {
+  return g_DemoInfo->m_AssetsPath + p_AssetName;
+}
 //---------------------------------------------------------------------------//

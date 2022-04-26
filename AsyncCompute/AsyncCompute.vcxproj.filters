@@ -4,13 +4,26 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.hpp" />
-    <ClInclude Include="Timer.hpp" />
-    <ClInclude Include="AppMgr.hpp" />
-    <ClInclude Include="DemoUtils.hpp" />
-    <ClInclude Include="Demo.hpp" />
+    <ClInclude Include="ParticleSimulation.hpp" />
+    <ClInclude Include="Win32App.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="DemoUtils.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.hpp">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{6c24db3f-35b0-40d9-b44e-c86043f932ec}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

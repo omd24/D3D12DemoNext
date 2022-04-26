@@ -4,7 +4,6 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
-
 #include <math.h>
 
 static constexpr UINT64 TicksPerSecond = 10'000'000;

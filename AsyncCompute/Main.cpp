@@ -1,9 +1,22 @@
-#include "AppMgr.hpp"
+#include "Win32App.hpp"
+#include "ParticleSimulation.hpp"
 
 _Use_decl_annotations_ int WINAPI
 WinMain(HINSTANCE p_Instance, HINSTANCE, LPSTR, int p_CmdShow) {
-  void * demoMem = reinterpret_cast<void*>(::malloc(sizeof(*g_Demo)));
-  g_Demo = new(demoMem) Demo;
+  // Set up the general demo data
+  void* demoMem = reinterpret_cast<void*>(::malloc(sizeof(*g_DemoInfo)));
+  g_DemoInfo = new (demoMem) DemoInfo;
   demoInit(1280, 720, L"D3D12 n-Body Gravity Simulation");
-  return appMgrRun(p_Instance, p_CmdShow);
+
+  // Create a registery to pass the callbacks
+  static constexpr CallBackRegistery cbReg = {
+      .onInit = onInit,
+      .onDestroy = onDestroy,
+      .onUpdate = onUpdate,
+      .onRender = onRender,
+      .onKeyDown = onKeyDown,
+      .onKeyUp = onKeyUp};
+
+  // Run the application:
+  return appExec(p_Instance, p_CmdShow, cbReg);
 }

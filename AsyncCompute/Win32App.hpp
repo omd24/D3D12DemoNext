@@ -1,26 +1,46 @@
 #pragma once
 
 /******************************************************************************
- * \win32-based application manager responsible for running the demo
+ * \win32-based application running the demo
  * \
  ******************************************************************************/
 
-#include "Demo.hpp"
+#include "DemoUtils.hpp"
 
 //---------------------------------------------------------------------------//
-// Demo callbacks:
+// The required functions in terms of callback:
 //---------------------------------------------------------------------------//
 typedef void (*onInitFunc)(void);
+typedef void (*onDestroyFunc)(void);
 typedef void (*onUpdateFunc)(void);
 typedef void (*onRenderFunc)(void);
-
+typedef void (*onKeyDownFunc)(UINT8);
+typedef void (*onKeyUpFunc)(UINT8);
 //---------------------------------------------------------------------------//
-// Dispaly a Message Box
+// A registery to to pass around the callbacks
+struct CallBackRegistery {
+  onInitFunc onInit = nullptr;
+  onDestroyFunc onDestroy = nullptr;
+  onUpdateFunc onUpdate = nullptr;
+  onRenderFunc onRender = nullptr;
+  onKeyDownFunc onKeyDown = nullptr;
+  onKeyUpFunc onKeyUp = nullptr;
+};
+//---------------------------------------------------------------------------//
+// Windowy functions:
+//---------------------------------------------------------------------------//
+HWND g_WinHandle = nullptr;
+//---------------------------------------------------------------------------//
+inline void setWindowTitle(LPCWSTR p_Text, const std::wstring& p_Title) {
+  std::wstring windowText = p_Title + L": " + p_Text;
+  SetWindowText(g_WinHandle, windowText.c_str());
+}
+//---------------------------------------------------------------------------//
 inline void msgBox(const std::string& p_Msg) {
   MessageBoxA(g_WinHandle, p_Msg.c_str(), "Error", MB_OK);
 }
 //---------------------------------------------------------------------------//
-// Trace an error and convert the msg to a human-readable string
+// Traces an error and convert the msg to a human-readable string
 inline void traceHr(const std::string& p_Msg, HRESULT p_Hr) {
   char hrMsg[512];
   FormatMessageA(
@@ -37,6 +57,8 @@ inline void traceHr(const std::string& p_Msg, HRESULT p_Hr) {
 //---------------------------------------------------------------------------//
 static LRESULT CALLBACK
 msgProc(HWND p_Wnd, UINT p_Message, WPARAM p_WParam, LPARAM p_LParam) {
+  CallBackRegistery* cbRegPtr = reinterpret_cast<CallBackRegistery*>(
+      GetWindowLongPtr(p_Wnd, GWLP_USERDATA));
   switch (p_Message) {
   case WM_CREATE: {
     // Save the data passed in to CreateWindow.
@@ -49,21 +71,21 @@ msgProc(HWND p_Wnd, UINT p_Message, WPARAM p_WParam, LPARAM p_LParam) {
     return 0;
 
   case WM_KEYDOWN:
-    if (g_Demo) {
-      demoKeyDown(static_cast<UINT8>(p_WParam));
+    if (cbRegPtr) {
+      cbRegPtr->onKeyDown(static_cast<UINT8>(p_WParam));
     }
     return 0;
 
   case WM_KEYUP:
-    if (g_Demo) {
-      demoKeyUp(static_cast<UINT8>(p_WParam));
+    if (cbRegPtr) {
+      cbRegPtr->onKeyUp(static_cast<UINT8>(p_WParam));
     }
     return 0;
 
   case WM_PAINT:
-    if (g_Demo) {
-      demoUpdate();
-      demoRender();
+    if (cbRegPtr) {
+      cbRegPtr->onUpdate();
+      cbRegPtr->onRender();
     }
     return 0;
 
@@ -73,22 +95,16 @@ msgProc(HWND p_Wnd, UINT p_Message, WPARAM p_WParam, LPARAM p_LParam) {
   }
   return DefWindowProc(p_Wnd, p_Message, p_WParam, p_LParam);
 }
-
 //---------------------------------------------------------------------------//
-// WinApi app manager:
-//---------------------------------------------------------------------------//
-inline int appMgrRun(
-    HINSTANCE p_Instance,
-    int p_CmdShow,
-    onRenderFunc p_OnInit = nullptr,
-    onRenderFunc p_OnUpdate = nullptr,
-    onRenderFunc p_OnRender = nullptr) {
-  DEBUG_BREAK(g_Demo != nullptr && g_Demo->m_IsInitialized);
+// Runs the win32-based app:
+inline int
+appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery p_CbReg) {
+  DEBUG_BREAK(g_DemoInfo != nullptr && g_DemoInfo->m_IsInitialized);
 
   // Parse the command line parameters
   int argc;
   LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-  demoParseCommandLineArgs(argv, argc);
+  demoParseCmdArgs(argv, argc);
   LocalFree(argv);
 
   // Initialize the window class.
@@ -107,14 +123,14 @@ inline int appMgrRun(
   RECT windowRect = {
       0,
       0,
-      static_cast<LONG>(g_Demo->m_Width),
-      static_cast<LONG>(g_Demo->m_Height)};
+      static_cast<LONG>(g_DemoInfo->m_Width),
+      static_cast<LONG>(g_DemoInfo->m_Height)};
   AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
   // Create the window and store a handle to it.
   g_WinHandle = CreateWindow(
       windowClass.lpszClassName,
-      g_Demo->m_Title.c_str(),
+      g_DemoInfo->m_Title.c_str(),
       WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT,
       CW_USEDEFAULT,
@@ -123,7 +139,7 @@ inline int appMgrRun(
       nullptr, // We have no parent window.
       nullptr, // We aren't using menus.
       p_Instance,
-      0);
+      &p_CbReg);
 
   if (g_WinHandle == nullptr) {
     msgBox("CreateWindowEx() failed");
@@ -131,8 +147,8 @@ inline int appMgrRun(
   }
 
   // Initialize the demo. OnInit is demo specific
-  if (p_OnInit)
-    p_OnInit();
+  if (p_CbReg.onInit)
+    p_CbReg.onInit();
 
   ShowWindow(g_WinHandle, p_CmdShow);
 
@@ -146,8 +162,10 @@ inline int appMgrRun(
     }
   }
 
-  demoDestroy();
+  if (p_CbReg.onDestroy)
+    p_CbReg.onDestroy();
 
   // Return this part of the WM_QUIT message to Windows.
   return static_cast<char>(msg.wParam);
 }
+//---------------------------------------------------------------------------//

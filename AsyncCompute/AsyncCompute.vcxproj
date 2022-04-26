@@ -149,10 +149,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.hpp" />
-    <ClInclude Include="Demo.hpp" />
     <ClInclude Include="DemoUtils.hpp" />
+    <ClInclude Include="ParticleSimulation.hpp" />
     <ClInclude Include="Timer.hpp" />
-    <ClInclude Include="AppMgr.hpp" />
+    <ClInclude Include="Win32App.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
