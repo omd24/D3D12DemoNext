@@ -71,6 +71,10 @@ using U64 = uint64_t;
 // Helper macros:
 //---------------------------------------------------------------------------//
 //
+//---------------------------------------------------------------------------//
+#define WIN32_MSG_BOX(x)                                                       \
+  { MessageBoxA(g_WinHandle, x, "Error", MB_OK); }
+
 #define D3D_SAFE_RELEASE(p)                                                    \
   {                                                                            \
     if (p)                                                                     \
@@ -92,6 +96,9 @@ using U64 = uint64_t;
   if (!(expr)) {                                                               \
     __debugbreak();                                                            \
   }
+
+// TODO: use unique name generator or redesign!
+#define DEFER(name_) auto name_ = DeferHelper{} + [&]()
 
 //---------------------------------------------------------------------------//
 // Helper functions:
@@ -446,36 +453,89 @@ struct DemoInfo {
   // Additional data goes here:
   //
 };
-DemoInfo* g_DemoInfo = nullptr;
 //---------------------------------------------------------------------------//
-inline void demoInit(UINT p_Width, UINT p_Height, std::wstring p_Name) {
-  g_DemoInfo->m_Width = p_Width;
-  g_DemoInfo->m_Height = p_Height;
-  g_DemoInfo->m_Title = p_Name;
-  g_DemoInfo->m_UseWarpDevice = false;
+// General demo functions:
+//---------------------------------------------------------------------------//
+inline void
+demoInit(DemoInfo* p_Demo, UINT p_Width, UINT p_Height, std::wstring p_Name) {
+  p_Demo->m_Width = p_Width;
+  p_Demo->m_Height = p_Height;
+  p_Demo->m_Title = p_Name;
+  p_Demo->m_UseWarpDevice = false;
 
   WCHAR assetsPath[512];
   getAssetsPath(assetsPath, _countof(assetsPath));
-  g_DemoInfo->m_AssetsPath = assetsPath;
+  p_Demo->m_AssetsPath = assetsPath;
 
-  g_DemoInfo->m_AspectRatio =
+  p_Demo->m_AspectRatio =
       static_cast<float>(p_Width) / static_cast<float>(p_Height);
 
-  g_DemoInfo->m_IsInitialized = true;
+  p_Demo->m_IsInitialized = true;
 }
 //---------------------------------------------------------------------------//
-inline void
-demoParseCmdArgs(_In_reads_(p_Argc) WCHAR* p_Argv[], int p_Argc) {
+inline void demoParseCmdArgs(
+    DemoInfo* p_Demo, _In_reads_(p_Argc) WCHAR* p_Argv[], int p_Argc) {
   for (int i = 1; i < p_Argc; ++i) {
     if (_wcsnicmp(p_Argv[i], L"-warp", wcslen(p_Argv[i])) == 0 ||
         _wcsnicmp(p_Argv[i], L"/warp", wcslen(p_Argv[i])) == 0) {
-      g_DemoInfo->m_UseWarpDevice = true;
-      g_DemoInfo->m_Title = g_DemoInfo->m_Title + L" (WARP)";
+      p_Demo->m_UseWarpDevice = true;
+      p_Demo->m_Title = p_Demo->m_Title + L" (WARP)";
     }
   }
 }
 //---------------------------------------------------------------------------//
-inline std::wstring demoGetAssetPath(LPCWSTR p_AssetName) {
-  return g_DemoInfo->m_AssetsPath + p_AssetName;
+inline std::wstring demoGetAssetPath(DemoInfo* p_Demo, LPCWSTR p_AssetName) {
+  return p_Demo->m_AssetsPath + p_AssetName;
 }
+//---------------------------------------------------------------------------//
+// Defer helpers:
+//---------------------------------------------------------------------------//
+template <typename F>
+struct Deferrer {
+  Deferrer(F&& p_Func) : m_Func(std::move(p_Func)) {}
+  ~Deferrer() noexcept {
+    if (!m_Canceled)
+      m_Func();
+  }
+  void cancel() noexcept { m_Canceled = true; }
+
+private:
+  bool m_Canceled = false;
+  F m_Func;
+};
+//---------------------------------------------------------------------------//
+template <typename F>
+Deferrer<F> makeDeferrer(F&& p_Func) {
+  return Deferrer<F>(std::move(p_Func));
+}
+struct DeferHelper {
+  template <typename F>
+  friend Deferrer<F> operator+(DeferHelper const&, F&& p_Func) {
+    return makeDeferrer(std::move(p_Func));
+  }
+};
+//---------------------------------------------------------------------------//
+// Callback helpers:
+//---------------------------------------------------------------------------//
+typedef void (*onInitFunc)(void);
+typedef void (*onDestroyFunc)(void);
+typedef void (*onUpdateFunc)(void);
+typedef void (*onRenderFunc)(void);
+typedef void (*onKeyDownFunc)(UINT8);
+typedef void (*onKeyUpFunc)(UINT8);
+//---------------------------------------------------------------------------//
+struct CallBackRegistery {
+  onInitFunc onInit = nullptr;
+  onDestroyFunc onDestroy = nullptr;
+  onUpdateFunc onUpdate = nullptr;
+  onRenderFunc onRender = nullptr;
+  onKeyDownFunc onKeyDown = nullptr;
+  onKeyUpFunc onKeyUp = nullptr;
+};
+//---------------------------------------------------------------------------//
+// Global variables
+//---------------------------------------------------------------------------//
+inline DemoInfo* g_DemoInfo = nullptr;
+inline HWND g_WinHandle = nullptr;
+inline CallBackRegistery g_FuncReg{};
 //---------------------------------------------------------------------------//

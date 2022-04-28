@@ -146,13 +146,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ParticleSimulation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="DemoUtils.hpp" />
     <ClInclude Include="ParticleSimulation.hpp" />
     <ClInclude Include="Timer.hpp" />
-    <ClInclude Include="Win32App.hpp" />
+    <ClInclude Include="appExec.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />

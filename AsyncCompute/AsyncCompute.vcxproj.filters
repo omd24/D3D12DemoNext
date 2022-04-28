@@ -2,10 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ParticleSimulation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ParticleSimulation.hpp" />
-    <ClInclude Include="Win32App.hpp">
+    <ClInclude Include="appExec.hpp">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="Camera.hpp">
