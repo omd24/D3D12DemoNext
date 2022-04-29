@@ -31,3 +31,6 @@ inline constexpr void registerCallbacks() {
   g_FuncReg.onKeyUp = onKeyUp;
 }
 //---------------------------------------------------------------------------//
+struct ParticleSimulationData;
+ParticleSimulationData* g_ParticleSimData = nullptr;
+//---------------------------------------------------------------------------//
