@@ -17,9 +17,9 @@
 // Includes:
 //---------------------------------------------------------------------------//
 //
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+//#ifndef NOMINMAX
+//#define NOMINMAX
+//#endif
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -104,9 +104,18 @@ using U64 = uint64_t;
 #define DEFER(name_) auto name_ = DeferHelper{} + [&]()
 
 //---------------------------------------------------------------------------//
+// Global variables
+//---------------------------------------------------------------------------//
+struct DemoInfo;
+struct CallBackRegistery;
+
+inline DemoInfo* g_DemoInfo = nullptr;
+inline HWND g_WinHandle = nullptr;
+inline CallBackRegistery * g_CallbackReg = nullptr;
+
+//---------------------------------------------------------------------------//
 // Helper functions:
 //---------------------------------------------------------------------------//
-//
 // Aligns p_Val to the next multiple of p_Alignment
 template <typename T>
 inline T alignUp(T p_Val, T p_Alignment) {
@@ -178,6 +187,26 @@ constexpr size_t arrayCount(T (&)[N]) {
 template <typename T, U32 N>
 constexpr U32 arrayCount32(T (&)[N]) {
   return N;
+}
+//---------------------------------------------------------------------------//
+template <typename T, U32 N>
+constexpr void setArrayToZero(T (&p_Array)[N]) {
+  ::memset(p_Array, 0, N * sizeof(p_Array[0]));
+}
+//---------------------------------------------------------------------------//
+// Traces an error and convert the msg to a human-readable string
+inline void traceHr(const std::string& p_Msg, HRESULT p_Hr) {
+  char hrMsg[512];
+  FormatMessageA(
+      FORMAT_MESSAGE_FROM_SYSTEM,
+      nullptr,
+      p_Hr,
+      0,
+      hrMsg,
+      arrayCount32(hrMsg),
+      nullptr);
+  std::string errMsg = p_Msg + ".\nError! " + hrMsg;
+  WIN32_MSG_BOX(errMsg.c_str());
 }
 //---------------------------------------------------------------------------//
 inline void
@@ -535,10 +564,5 @@ struct CallBackRegistery {
   onKeyDownFunc onKeyDown = nullptr;
   onKeyUpFunc onKeyUp = nullptr;
 };
-//---------------------------------------------------------------------------//
-// Global variables
-//---------------------------------------------------------------------------//
-inline DemoInfo* g_DemoInfo = nullptr;
-inline HWND g_WinHandle = nullptr;
-inline CallBackRegistery g_FuncReg{};
+
 //---------------------------------------------------------------------------//

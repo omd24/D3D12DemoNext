@@ -77,7 +77,7 @@ inline void timerResetElapsedTime(Timer* p_Timer) {
 //---------------------------------------------------------------------------//
 typedef void (*updateFuncCallback)(void);
 // Update Timer state, calling the specified update callback if needed
-void Tick(Timer* p_Timer, updateFuncCallback p_Update = nullptr) {
+inline void Tick(Timer* p_Timer, updateFuncCallback p_Update = nullptr) {
   LARGE_INTEGER currentTime;
   QueryPerformanceCounter(&currentTime);
 

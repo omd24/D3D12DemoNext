@@ -8,26 +8,11 @@
 #include "DemoUtils.hpp"
 
 //---------------------------------------------------------------------------//
-// Windowy functions:
+// Windowy helper functions:
 //---------------------------------------------------------------------------//
 inline void setWindowTitle(LPCWSTR p_Text, const std::wstring& p_Title) {
   std::wstring windowText = p_Title + L": " + p_Text;
   SetWindowText(g_WinHandle, windowText.c_str());
-}
-//---------------------------------------------------------------------------//
-// Traces an error and convert the msg to a human-readable string
-inline void traceHr(const std::string& p_Msg, HRESULT p_Hr) {
-  char hrMsg[512];
-  FormatMessageA(
-      FORMAT_MESSAGE_FROM_SYSTEM,
-      nullptr,
-      p_Hr,
-      0,
-      hrMsg,
-      arrayCount32(hrMsg),
-      nullptr);
-  std::string errMsg = p_Msg + ".\nError! " + hrMsg;
-  WIN32_MSG_BOX(errMsg.c_str());
 }
 //---------------------------------------------------------------------------//
 static LRESULT CALLBACK
@@ -74,7 +59,7 @@ msgProc(HWND p_Wnd, UINT p_Message, WPARAM p_WParam, LPARAM p_LParam) {
 // Execute the application:
 //---------------------------------------------------------------------------//
 inline int
-appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery p_FuncReg) {
+appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery * p_CallbackReg) {
   DEBUG_BREAK(g_DemoInfo != nullptr && g_DemoInfo->m_IsInitialized);
 
   // Parse the command line parameters
@@ -115,7 +100,7 @@ appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery p_FuncReg) {
       nullptr, // We have no parent window.
       nullptr, // We aren't using menus.
       p_Instance,
-      &p_FuncReg);
+      p_CallbackReg);
 
   if (g_WinHandle == nullptr) {
     WIN32_MSG_BOX("CreateWindowEx() failed");
@@ -123,8 +108,8 @@ appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery p_FuncReg) {
   }
 
   // Initialize the demo. OnInit is demo specific
-  if (p_FuncReg.onInit)
-    p_FuncReg.onInit();
+  if (p_CallbackReg->onInit)
+    p_CallbackReg->onInit();
 
   ShowWindow(g_WinHandle, p_CmdShow);
 
@@ -138,8 +123,8 @@ appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery p_FuncReg) {
     }
   }
 
-  if (p_FuncReg.onDestroy)
-    p_FuncReg.onDestroy();
+  if (p_CallbackReg->onDestroy)
+    p_CallbackReg->onDestroy();
 
   // Return this part of the WM_QUIT message to Windows.
   return static_cast<char>(msg.wParam);
