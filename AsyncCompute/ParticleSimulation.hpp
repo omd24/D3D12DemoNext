@@ -95,7 +95,7 @@ struct ParticleSimData {
   ID3D12ResourcePtr m_ParticleBuffer1[THREAD_COUNT];
   ID3D12ResourcePtr m_ParticleBuffer0Upload[THREAD_COUNT];
   ID3D12ResourcePtr m_ParticleBuffer1Upload[THREAD_COUNT];
-  ID3D12ResourcePtr m_ConstantBufferGS;
+  ID3D12ResourcePtr m_CbufferGS;
   UINT8* m_CbufferGSData;
   ID3D12ResourcePtr m_CbufferCS;
 

@@ -46,10 +46,12 @@ MAKE_SMART_COM_PTR(ID3D12Device);
 MAKE_SMART_COM_PTR(ID3D12GraphicsCommandList4);
 MAKE_SMART_COM_PTR(ID3D12GraphicsCommandList);
 MAKE_SMART_COM_PTR(ID3D12CommandQueue);
+MAKE_SMART_COM_PTR(IDXGISwapChain1);
 MAKE_SMART_COM_PTR(IDXGISwapChain3);
 MAKE_SMART_COM_PTR(IDXGIFactory4);
 MAKE_SMART_COM_PTR(IDXGIFactory6);
 MAKE_SMART_COM_PTR(IDXGIAdapter1);
+MAKE_SMART_COM_PTR(IDXGIAdapter);
 MAKE_SMART_COM_PTR(ID3D12Fence);
 MAKE_SMART_COM_PTR(ID3D12CommandAllocator);
 MAKE_SMART_COM_PTR(ID3D12Resource);
@@ -92,6 +94,7 @@ using U64 = uint64_t;
     HRESULT hr_ = x;                                                           \
     if (FAILED(hr_)) {                                                         \
       traceHr(#x, hr_);                                                        \
+      DEBUG_BREAK(0);                                                          \
     }                                                                          \
   }
 
@@ -103,6 +106,12 @@ using U64 = uint64_t;
 // TODO: use unique name generator or redesign!
 #define DEFER(name_) auto name_ = DeferHelper{} + [&]()
 
+// Naming helpers for COM ptrs:
+// The indexed variant will include the index in the name of the object.
+#define D3D_NAME_OBJECT(x) setName((x).GetInterfacePtr(), L#x)
+#define D3D_NAME_OBJECT_INDEXED(x, n)                                          \
+  setNameIndexed((x)[n].GetInterfacePtr(), L#x, n)
+
 //---------------------------------------------------------------------------//
 // Global variables
 //---------------------------------------------------------------------------//
@@ -111,7 +120,7 @@ struct CallBackRegistery;
 
 inline DemoInfo* g_DemoInfo = nullptr;
 inline HWND g_WinHandle = nullptr;
-inline CallBackRegistery * g_CallbackReg = nullptr;
+inline CallBackRegistery* g_CallbackReg = nullptr;
 
 //---------------------------------------------------------------------------//
 // Helper functions:
@@ -338,12 +347,6 @@ inline void setNameIndexed(ID3D12Object* pObject, LPCWSTR name, UINT index) {
 inline void setName(ID3D12Object*, LPCWSTR) {}
 inline void setNameIndexed(ID3D12Object*, LPCWSTR, UINT) {}
 #endif
-//---------------------------------------------------------------------------//
-// Naming helper for ComPtr<T>.
-// Assigns the name of the variable as the name of the object.
-// The indexed variant will include the index in the name of the object.
-#define NAME_D3D12_OBJECT(x) setName((x).Get(), L#x)
-#define NAME_D3D12_OBJECT_INDEXED(x, n) setNameIndexed((x)[n].Get(), L#x, n)
 //---------------------------------------------------------------------------//
 #ifdef D3D_COMPILE_STANDARD_FILE_INCLUDE
 inline ID3DBlobPtr compileShader(

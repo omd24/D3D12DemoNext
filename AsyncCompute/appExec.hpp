@@ -59,7 +59,7 @@ msgProc(HWND p_Wnd, UINT p_Message, WPARAM p_WParam, LPARAM p_LParam) {
 // Execute the application:
 //---------------------------------------------------------------------------//
 inline int
-appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery * p_CallbackReg) {
+appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery* p_CallbackReg) {
   DEBUG_BREAK(g_DemoInfo != nullptr && g_DemoInfo->m_IsInitialized);
 
   // Parse the command line parameters
@@ -107,7 +107,7 @@ appExec(HINSTANCE p_Instance, int p_CmdShow, CallBackRegistery * p_CallbackReg) 
     return 0;
   }
 
-  // Initialize the demo. OnInit is demo specific
+  // Initialize demo-specific onInit after wnd
   if (p_CallbackReg->onInit)
     p_CallbackReg->onInit();
 

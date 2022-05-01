@@ -26,5 +26,16 @@
     <Filter Include="Common">
       <UniqueIdentifier>{6c24db3f-35b0-40d9-b44e-c86043f932ec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{d862affb-03f7-4460-85a6-c286f75f9631}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="nBodyGravityCS.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ParticleDraw.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
