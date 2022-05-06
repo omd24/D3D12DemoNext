@@ -40,6 +40,9 @@ inline constexpr void registerCallbacks() {
 #define FRAME_COUNT 2
 #define THREAD_COUNT 1
 
+struct ParticleSimData;
+DWORD
+_asyncComputeThreadProc(ParticleSimData* p_Context, int p_ThreadIndex);
 struct ParticleSimData {
   float m_ParticleSpread;
   UINT m_ParticleCount;
@@ -156,6 +159,13 @@ struct ParticleSimData {
     SrvParticlePosVelo1 = SrvParticlePosVelo0 + THREAD_COUNT,
     DescriptorCount = SrvParticlePosVelo1 + THREAD_COUNT
   };
+
+  static DWORD WINAPI threadProc(ThreadData* p_Data) {
+    return _asyncComputeThreadProc(p_Data->m_Context, p_Data->m_ThreadIndex);
+  }
+
+  ~ParticleSimData(){/* Just release ComPtrs */};
 };
-inline ParticleSimData* g_ParticleSim = nullptr;
+// inline ParticleSimData* g_ParticleSim = nullptr;
+inline ParticleSimData* g_ParticleSim;
 //---------------------------------------------------------------------------//

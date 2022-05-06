@@ -82,8 +82,8 @@ using U64 = uint64_t;
 
 #define D3D_SAFE_RELEASE(p)                                                    \
   {                                                                            \
-    if (p)                                                                     \
-      (p)->Release()                                                           \
+    if (p.GetInterfacePtr())                                                                     \
+      (p).Release();                                                           \
   }
 
 #define D3D_ASSERT_HRESULT(x)                                                  \
@@ -384,17 +384,17 @@ inline ID3DBlobPtr compileShader(
 //---------------------------------------------------------------------------//
 // Resets all elements in a ComPtr array
 template <typename T>
-inline void resetComPtrArray(T* comPtrArray) {
-  for (auto& i : *comPtrArray) {
-    i.Reset();
+inline void resetComPtrArray(T* p_ComPtrArray) {
+  for (auto& i : *p_ComPtrArray) {
+    i = nullptr;
   }
 }
 //---------------------------------------------------------------------------//
 // Resets all elements in a unique_ptr array
 template <typename T>
-inline void resetUniquePtrArray(T* uniquePtrArray) {
-  for (auto& i : *uniquePtrArray) {
-    i.reset();
+inline void resetUniquePtrArray(T* p_UniquePtrArray) {
+  for (auto& i : *p_UniquePtrArray) {
+    i = nullptr;
   }
 }
 //---------------------------------------------------------------------------//
