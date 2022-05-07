@@ -137,7 +137,9 @@ static void _loadPipeline() {
       D3D_EXEC_CHECKED(g_ParticleSim->m_SwapChain->GetBuffer(
           n, IID_PPV_ARGS(&g_ParticleSim->m_RenderTargets[n])));
       g_ParticleSim->m_Device->CreateRenderTargetView(
-          g_ParticleSim->m_RenderTargets[n].GetInterfacePtr(), nullptr, rtvHandle);
+          g_ParticleSim->m_RenderTargets[n].GetInterfacePtr(),
+          nullptr,
+          rtvHandle);
       rtvHandle.Offset(1, g_ParticleSim->m_RtvDescriptorSize);
 
       D3D_NAME_OBJECT_INDEXED(g_ParticleSim->m_RenderTargets, n);
@@ -176,11 +178,13 @@ static void _simulate(UINT p_ThreadIndex) {
   if (g_ParticleSim->m_SrvIndex[p_ThreadIndex] == 0) {
     srvIndex = ParticleSimData::SrvParticlePosVelo0;
     uavIndex = ParticleSimData::UavParticlePosVelo1;
-    pUavResource = g_ParticleSim->m_ParticleBuffer1[p_ThreadIndex].GetInterfacePtr();
+    pUavResource =
+        g_ParticleSim->m_ParticleBuffer1[p_ThreadIndex].GetInterfacePtr();
   } else {
     srvIndex = ParticleSimData::SrvParticlePosVelo1;
     uavIndex = ParticleSimData::UavParticlePosVelo0;
-    pUavResource = g_ParticleSim->m_ParticleBuffer0[p_ThreadIndex].GetInterfacePtr();
+    pUavResource =
+        g_ParticleSim->m_ParticleBuffer0[p_ThreadIndex].GetInterfacePtr();
   }
 
   pCommandList->ResourceBarrier(
@@ -190,11 +194,13 @@ static void _simulate(UINT p_ThreadIndex) {
           D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
           D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
-  pCommandList->SetPipelineState(g_ParticleSim->m_ComputeState.GetInterfacePtr());
+  pCommandList->SetPipelineState(
+      g_ParticleSim->m_ComputeState.GetInterfacePtr());
   pCommandList->SetComputeRootSignature(
       g_ParticleSim->m_ComputeRootSignature.GetInterfacePtr());
 
-  ID3D12DescriptorHeap* ppHeaps[] = {g_ParticleSim->m_SrvUavHeap.GetInterfacePtr()};
+  ID3D12DescriptorHeap* ppHeaps[] = {
+      g_ParticleSim->m_SrvUavHeap.GetInterfacePtr()};
   pCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
   CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(
@@ -226,14 +232,15 @@ static void _simulate(UINT p_ThreadIndex) {
 }
 //---------------------------------------------------------------------------//
 DWORD
-_asyncComputeThreadProc(ParticleSimData * p_Context, int p_ThreadIndex) {
+_asyncComputeThreadProc(ParticleSimData* p_Context, int p_ThreadIndex) {
   ID3D12CommandQueue* commandQueue =
       g_ParticleSim->m_ComputeCommandQueue[p_ThreadIndex].GetInterfacePtr();
   ID3D12CommandAllocator* commandAllocator =
       g_ParticleSim->m_ComputeAllocator[p_ThreadIndex].GetInterfacePtr();
   ID3D12GraphicsCommandList* commandList =
       g_ParticleSim->m_ComputeCommandList[p_ThreadIndex].GetInterfacePtr();
-  ID3D12Fence* fence = g_ParticleSim->m_ThreadFences[p_ThreadIndex].GetInterfacePtr();
+  ID3D12Fence* fence =
+      g_ParticleSim->m_ThreadFences[p_ThreadIndex].GetInterfacePtr();
 
   while (0 == InterlockedGetValue(&g_ParticleSim->m_Terminating)) {
     // Run the particle simulation.
@@ -267,7 +274,8 @@ _asyncComputeThreadProc(ParticleSimData * p_Context, int p_ThreadIndex) {
     if (g_ParticleSim->m_RenderContextFence->GetCompletedValue() <
         renderContextFenceValue) {
       D3D_EXEC_CHECKED(commandQueue->Wait(
-          g_ParticleSim->m_RenderContextFence.GetInterfacePtr(), renderContextFenceValue));
+          g_ParticleSim->m_RenderContextFence.GetInterfacePtr(),
+          renderContextFenceValue));
       InterlockedExchange(
           &g_ParticleSim->m_RenderContextFenceValues[p_ThreadIndex], 0);
     }
@@ -322,10 +330,7 @@ static void _createVertexBuffer() {
   using Vertex = ParticleSimData::ParticleVertex;
   Vertex* vertices =
       (Vertex*)::calloc(g_ParticleSim->m_ParticleCount, sizeof(Vertex));
-  DEFER(free_vertex_mem) { 
-    ::free(vertices); 
-  
-  };
+  DEFER(free_vertex_mem) { ::free(vertices); };
   for (UINT i = 0; i < g_ParticleSim->m_ParticleCount; i++) {
     vertices[i].m_Color = XMFLOAT4(1.0f, 1.0f, 0.2f, 1.0f);
   }
@@ -502,9 +507,13 @@ static void _createParticleBuffers() {
         ParticleSimData::SrvParticlePosVelo1 + index,
         g_ParticleSim->m_SrvUavDescriptorSize);
     g_ParticleSim->m_Device->CreateShaderResourceView(
-        g_ParticleSim->m_ParticleBuffer0[index].GetInterfacePtr(), &srvDesc, srvHandle0);
+        g_ParticleSim->m_ParticleBuffer0[index].GetInterfacePtr(),
+        &srvDesc,
+        srvHandle0);
     g_ParticleSim->m_Device->CreateShaderResourceView(
-        g_ParticleSim->m_ParticleBuffer1[index].GetInterfacePtr(), &srvDesc, srvHandle1);
+        g_ParticleSim->m_ParticleBuffer1[index].GetInterfacePtr(),
+        &srvDesc,
+        srvHandle1);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
     uavDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -739,7 +748,8 @@ static void _loadAssets() {
 
     // Describe and create the compute pipeline state object (PSO).
     D3D12_COMPUTE_PIPELINE_STATE_DESC computePsoDesc = {};
-    computePsoDesc.pRootSignature = g_ParticleSim->m_ComputeRootSignature.GetInterfacePtr();
+    computePsoDesc.pRootSignature =
+        g_ParticleSim->m_ComputeRootSignature.GetInterfacePtr();
     computePsoDesc.CS =
         CD3DX12_SHADER_BYTECODE(computeShader.GetInterfacePtr());
 
@@ -752,7 +762,8 @@ static void _loadAssets() {
   D3D_EXEC_CHECKED(g_ParticleSim->m_Device->CreateCommandList(
       0,
       D3D12_COMMAND_LIST_TYPE_DIRECT,
-      g_ParticleSim->m_CommandAllocators[g_ParticleSim->m_FrameIndex].GetInterfacePtr(),
+      g_ParticleSim->m_CommandAllocators[g_ParticleSim->m_FrameIndex]
+          .GetInterfacePtr(),
       g_ParticleSim->m_PipelineState.GetInterfacePtr(),
       IID_PPV_ARGS(&g_ParticleSim->m_CommandList)));
   D3D_NAME_OBJECT(g_ParticleSim->m_CommandList);
@@ -840,7 +851,8 @@ static void _loadAssets() {
 
   // Close the command list and execute it to begin the initial GPU setup.
   D3D_EXEC_CHECKED(g_ParticleSim->m_CommandList->Close());
-  ID3D12CommandList* ppCommandLists[] = {g_ParticleSim->m_CommandList.GetInterfacePtr()};
+  ID3D12CommandList* ppCommandLists[] = {
+      g_ParticleSim->m_CommandList.GetInterfacePtr()};
   g_ParticleSim->m_CommandQueue->ExecuteCommandLists(
       _countof(ppCommandLists), ppCommandLists);
 
@@ -944,36 +956,154 @@ static void _createAsyncContexts() {
   }
 }
 //---------------------------------------------------------------------------//
-static void _populateCommandList();
+static void _populateCommandList() {
+  // Command list allocators can only be reset when the associated
+  // command lists have finished execution on the GPU; apps should use
+  // fences to determine GPU execution progress.
+  D3D_EXEC_CHECKED(
+      g_ParticleSim->m_CommandAllocators[g_ParticleSim->m_FrameIndex]->Reset());
+
+  // However, when ExecuteCommandList() is called on a particular command
+  // list, that command list can then be reset at any time and must be before
+  // re-recording.
+  D3D_EXEC_CHECKED(g_ParticleSim->m_CommandList->Reset(
+      g_ParticleSim->m_CommandAllocators[g_ParticleSim->m_FrameIndex]
+          .GetInterfacePtr(),
+      g_ParticleSim->m_PipelineState.GetInterfacePtr()));
+
+  // Set necessary state.
+  g_ParticleSim->m_CommandList->SetPipelineState(
+      g_ParticleSim->m_PipelineState.GetInterfacePtr());
+  g_ParticleSim->m_CommandList->SetGraphicsRootSignature(
+      g_ParticleSim->m_RootSignature.GetInterfacePtr());
+
+  g_ParticleSim->m_CommandList->SetGraphicsRootConstantBufferView(
+      ParticleSimData::GraphicsRootCBV,
+      g_ParticleSim->m_CbufferGS->GetGPUVirtualAddress() +
+          g_ParticleSim->m_FrameIndex * sizeof(ParticleSimData::CbufferGS));
+
+  ID3D12DescriptorHeap* ppHeaps[] = {
+      g_ParticleSim->m_SrvUavHeap.GetInterfacePtr()};
+  g_ParticleSim->m_CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+  g_ParticleSim->m_CommandList->IASetVertexBuffers(
+      0, 1, &g_ParticleSim->m_VertexBufferView);
+  g_ParticleSim->m_CommandList->IASetPrimitiveTopology(
+      D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+  g_ParticleSim->m_CommandList->RSSetScissorRects(
+      1, &g_ParticleSim->m_ScissorRect);
+
+  // Indicate that the back buffer will be used as a render target.
+  g_ParticleSim->m_CommandList->ResourceBarrier(
+      1,
+      &CD3DX12_RESOURCE_BARRIER::Transition(
+          g_ParticleSim->m_RenderTargets[g_ParticleSim->m_FrameIndex]
+              .GetInterfacePtr(),
+          D3D12_RESOURCE_STATE_PRESENT,
+          D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+  CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
+      g_ParticleSim->m_RtvHeap->GetCPUDescriptorHandleForHeapStart(),
+      g_ParticleSim->m_FrameIndex,
+      g_ParticleSim->m_RtvDescriptorSize);
+  g_ParticleSim->m_CommandList->OMSetRenderTargets(
+      1, &rtvHandle, FALSE, nullptr);
+
+  // Record commands.
+  const float clearColor[] = {0.0f, 0.0f, 0.1f, 0.0f};
+  g_ParticleSim->m_CommandList->ClearRenderTargetView(
+      rtvHandle, clearColor, 0, nullptr);
+
+  // Render the particles.
+  float viewportHeight = static_cast<float>(
+      static_cast<UINT>(g_ParticleSim->m_Viewport.Height) /
+      g_ParticleSim->m_HeightInstances);
+  float viewportWidth = static_cast<float>(
+      static_cast<UINT>(g_ParticleSim->m_Viewport.Width) /
+      g_ParticleSim->m_WidthInstances);
+  for (UINT n = 0; n < THREAD_COUNT; n++) {
+    const UINT srvIndex = n + (g_ParticleSim->m_SrvIndex[n] == 0
+                                   ? ParticleSimData::SrvParticlePosVelo0
+                                   : ParticleSimData::SrvParticlePosVelo1);
+
+    CD3DX12_VIEWPORT viewport(
+        (n % g_ParticleSim->m_WidthInstances) * viewportWidth,
+        (n / g_ParticleSim->m_WidthInstances) * viewportHeight,
+        viewportWidth,
+        viewportHeight);
+
+    g_ParticleSim->m_CommandList->RSSetViewports(1, &viewport);
+
+    CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(
+        g_ParticleSim->m_SrvUavHeap->GetGPUDescriptorHandleForHeapStart(),
+        srvIndex,
+        g_ParticleSim->m_SrvUavDescriptorSize);
+    g_ParticleSim->m_CommandList->SetGraphicsRootDescriptorTable(
+        ParticleSimData::GraphicsRootSRVTable, srvHandle);
+
+    PIXBeginEvent(
+        g_ParticleSim->m_CommandList.GetInterfacePtr(),
+        0,
+        L"Draw particles for thread %u",
+        n);
+    g_ParticleSim->m_CommandList->DrawInstanced(
+        g_ParticleSim->m_ParticleCount, 1, 0, 0);
+    PIXEndEvent(g_ParticleSim->m_CommandList.GetInterfacePtr());
+  }
+
+  g_ParticleSim->m_CommandList->RSSetViewports(1, &g_ParticleSim->m_Viewport);
+
+  // Indicate that the back buffer will now be used to present.
+  g_ParticleSim->m_CommandList->ResourceBarrier(
+      1,
+      &CD3DX12_RESOURCE_BARRIER::Transition(
+          g_ParticleSim->m_RenderTargets[g_ParticleSim->m_FrameIndex]
+              .GetInterfacePtr(),
+          D3D12_RESOURCE_STATE_RENDER_TARGET,
+          D3D12_RESOURCE_STATE_PRESENT));
+
+  D3D_EXEC_CHECKED(g_ParticleSim->m_CommandList->Close());
+}
 //---------------------------------------------------------------------------//
-static void _moveToNextFrame();
+// Cycle through the frame resources. This method blocks execution if the
+// next frame resource in the queue has not yet had its previous contents
+// processed by the GPU.
+static void _moveToNextFrame() {
+  // Assign the current fence value to the current frame.
+  g_ParticleSim->m_FrameFenceValues[g_ParticleSim->m_FrameIndex] =
+      g_ParticleSim->m_RenderContextFenceValue;
+
+  // Signal and increment the fence value.
+  D3D_EXEC_CHECKED(g_ParticleSim->m_CommandQueue->Signal(
+      g_ParticleSim->m_RenderContextFence.GetInterfacePtr(),
+      g_ParticleSim->m_RenderContextFenceValue));
+  g_ParticleSim->m_RenderContextFenceValue++;
+
+  // Update the frame index.
+  g_ParticleSim->m_FrameIndex =
+      g_ParticleSim->m_SwapChain->GetCurrentBackBufferIndex();
+
+  // If the next frame is not ready to be rendered yet, wait until it is ready.
+  if (g_ParticleSim->m_RenderContextFence->GetCompletedValue() <
+      g_ParticleSim->m_FrameFenceValues[g_ParticleSim->m_FrameIndex]) {
+    D3D_EXEC_CHECKED(g_ParticleSim->m_RenderContextFence->SetEventOnCompletion(
+        g_ParticleSim->m_FrameFenceValues[g_ParticleSim->m_FrameIndex],
+        g_ParticleSim->m_RenderContextFenceEvent));
+    WaitForSingleObject(g_ParticleSim->m_RenderContextFenceEvent, INFINITE);
+  }
+}
 //---------------------------------------------------------------------------//
 static void _allocSimData() {
-   g_ParticleSim =
-       reinterpret_cast<ParticleSimData*>(::malloc(sizeof(*g_ParticleSim)));
+  DEBUG_BREAK(nullptr == g_ParticleSim);
+  g_ParticleSim =
+      reinterpret_cast<ParticleSimData*>(::malloc(sizeof(*g_ParticleSim)));
   ::memset(g_ParticleSim, 0, sizeof(*g_ParticleSim));
 
   g_ParticleSim->m_ParticleCount = 10000;
 }
 //---------------------------------------------------------------------------//
 static void _deallocSimData() {
-    // Notify the compute threads that the app is shutting down.
-    InterlockedExchange(&g_ParticleSim->m_Terminating, 1);
-    WaitForMultipleObjects(THREAD_COUNT, g_ParticleSim->m_ThreadHandles, TRUE, INFINITE);
-
-    // Ensure that the GPU is no longer referencing resources that are about to be
-    // cleaned up by the destructor.
-    _waitForRenderContext();
-
-    // Close handles to fence events and threads.
-    CloseHandle(g_ParticleSim->m_RenderContextFenceEvent);
-    for (int n = 0; n < THREAD_COUNT; n++)
-    {
-        CloseHandle(g_ParticleSim->m_ThreadHandles[n]);
-        CloseHandle(g_ParticleSim->m_ThreadFenceEvents[n]);
-    }
-
-  // Release resources:
+  // Release dynamic resources:
   g_ParticleSim->~ParticleSimData();
   ::free(g_ParticleSim);
   g_ParticleSim = nullptr;
@@ -1022,18 +1152,106 @@ void onInit(void) {
   cameraInit(&g_ParticleSim->m_Camera, {0.0f, 0.0f, 1500.0f});
   g_ParticleSim->m_Camera.m_MoveSpeed = 250.0f;
 
+  timerInit(&g_ParticleSim->m_Timer);
+
   _loadPipeline();
   _loadAssets();
   _createAsyncContexts();
 }
 //---------------------------------------------------------------------------//
-void onDestroy(void) { _deallocSimData(); }
+void onDestroy(void) {
+  // Notify the compute threads that the app is shutting down.
+  InterlockedExchange(&g_ParticleSim->m_Terminating, 1);
+  WaitForMultipleObjects(
+      THREAD_COUNT, g_ParticleSim->m_ThreadHandles, TRUE, INFINITE);
+
+  // Ensure that the GPU is no longer referencing resources that are about to be
+  // cleaned up by the destructor.
+  _waitForRenderContext();
+
+  // Close handles to fence events and threads.
+  CloseHandle(g_ParticleSim->m_RenderContextFenceEvent);
+  for (int n = 0; n < THREAD_COUNT; n++) {
+    CloseHandle(g_ParticleSim->m_ThreadHandles[n]);
+    CloseHandle(g_ParticleSim->m_ThreadFenceEvents[n]);
+  }
+  // Release resources
+  _deallocSimData();
+}
 //---------------------------------------------------------------------------//
-void onUpdate(void) {}
+void onUpdate(void) {
+    // Wait for the previous Present to complete.
+    WaitForSingleObjectEx(g_ParticleSim->m_SwapChainEvent, 100, FALSE);
+
+    timerTick(&g_ParticleSim->m_Timer, nullptr);
+    cameraUpdate(&g_ParticleSim->m_Camera, static_cast<float>(timerGetElapsedSeconds(&g_ParticleSim->m_Timer)));
+
+    ParticleSimData::CbufferGS cbufferGS = {};
+    XMMATRIX view = cameraGetViewMatrix(&g_ParticleSim->m_Camera);
+    CXMMATRIX proj = getProjectionMatrix(0.8f, g_DemoInfo->m_AspectRatio, 1.0f, 5000.0f);
+    XMStoreFloat4x4(&cbufferGS.m_WorldViewProjection, XMMatrixMultiply(view, proj));
+    XMStoreFloat4x4(&cbufferGS.m_InverseView, XMMatrixInverse(nullptr, view));
+
+    UINT8* destination = g_ParticleSim->m_CbufferGSData + sizeof(ParticleSimData::CbufferGS) * g_ParticleSim->m_FrameIndex;
+    memcpy(destination, &cbufferGS, sizeof(ParticleSimData::CbufferGS));
+}
 //---------------------------------------------------------------------------//
-void onRender(void) {}
+void onRender(void) {
+  if (g_ParticleSim) {
+    try {
+      // Let the compute thread know that a new frame is being rendered.
+      for (int n = 0; n < THREAD_COUNT; n++) {
+        InterlockedExchange(
+            &g_ParticleSim->m_RenderContextFenceValues[n],
+            g_ParticleSim->m_RenderContextFenceValue);
+      }
+
+      // Compute work must be completed before the frame can render or else the
+      // SRV will be in the wrong state.
+      for (UINT n = 0; n < THREAD_COUNT; n++) {
+        UINT64 threadFenceValue =
+            InterlockedGetValue(&g_ParticleSim->m_ThreadFenceValues[n]);
+        if (g_ParticleSim->m_ThreadFences[n]->GetCompletedValue() <
+            threadFenceValue) {
+          // Instruct the rendering command queue to wait for the current
+          // compute work to complete.
+          D3D_EXEC_CHECKED(g_ParticleSim->m_CommandQueue->Wait(
+              g_ParticleSim->m_ThreadFences[n].GetInterfacePtr(),
+              threadFenceValue));
+        }
+      }
+
+      PIXBeginEvent(
+          g_ParticleSim->m_CommandQueue.GetInterfacePtr(), 0, L"Render");
+
+      // Record all the commands we need to render the scene into the command
+      // list.
+      _populateCommandList();
+
+      // Execute the command list.
+      ID3D12CommandList* ppCommandLists[] = {
+          g_ParticleSim->m_CommandList.GetInterfacePtr()};
+      g_ParticleSim->m_CommandQueue->ExecuteCommandLists(
+          _countof(ppCommandLists), ppCommandLists);
+
+      PIXEndEvent(g_ParticleSim->m_CommandQueue.GetInterfacePtr());
+
+      // Present the frame.
+      D3D_EXEC_CHECKED(g_ParticleSim->m_SwapChain->Present(1, 0));
+
+      _moveToNextFrame();
+    } catch (HrException& e) {
+      if (e.Error() == DXGI_ERROR_DEVICE_REMOVED ||
+          e.Error() == DXGI_ERROR_DEVICE_RESET) {
+        _restoreD3DResources();
+      } else {
+        throw;
+      }
+    }
+  }
+}
 //---------------------------------------------------------------------------//
-void onKeyDown(UINT8) {}
+void onKeyDown(UINT8 key) { cameraOnKeyDown(&g_ParticleSim->m_Camera, key); }
 //---------------------------------------------------------------------------//
-void onKeyUp(UINT8) {}
+void onKeyUp(UINT8 key) { cameraOnKeyUp(&g_ParticleSim->m_Camera, key); }
 //---------------------------------------------------------------------------//
