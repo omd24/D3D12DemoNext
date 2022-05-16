@@ -15,37 +15,27 @@
 
 using namespace DirectX;
 
+struct ParticleSimCtx;
+
 //---------------------------------------------------------------------------//
-void onInit(void);
+void onInit();
 //---------------------------------------------------------------------------//
-void onDestroy(void);
+void onDestroy();
 //---------------------------------------------------------------------------//
-void onUpdate(void);
+void onUpdate();
 //---------------------------------------------------------------------------//
-void onRender(void);
+void onRender();
 //---------------------------------------------------------------------------//
 void onKeyDown(UINT8);
 //---------------------------------------------------------------------------//
 void onKeyUp(UINT8);
 //---------------------------------------------------------------------------//
-inline constexpr void registerCallbacks() {
-  g_CallbackReg->onInit = onInit;
-  g_CallbackReg->onDestroy = onDestroy;
-  g_CallbackReg->onUpdate = onUpdate;
-  g_CallbackReg->onRender = onRender;
-  g_CallbackReg->onKeyDown = onKeyDown;
-  g_CallbackReg->onKeyUp = onKeyUp;
-}
-//---------------------------------------------------------------------------//
 #define FRAME_COUNT 2
 #define THREAD_COUNT 1
 
-struct ParticleSimData;
-DWORD
-_asyncComputeThreadProc(ParticleSimData* p_Context, int p_ThreadIndex);
-struct ParticleSimData {
+struct ParticleSimCtx {
   float m_ParticleSpread;
-  UINT m_ParticleCount;
+  UINT m_ParticleCount = 10000;
 
   // Vertex data (color for now)
   struct ParticleVertex {
@@ -131,7 +121,7 @@ struct ParticleSimData {
   UINT64 volatile m_ThreadFenceValues[THREAD_COUNT];
 
   struct ThreadData {
-    ParticleSimData* m_Context;
+    ParticleSimCtx* m_Context;
     UINT m_ThreadIndex;
   };
   ThreadData m_ThreadData[THREAD_COUNT];
@@ -160,12 +150,8 @@ struct ParticleSimData {
     DescriptorCount = SrvParticlePosVelo1 + THREAD_COUNT
   };
 
-  static DWORD WINAPI threadProc(ThreadData* p_Data) {
-    return _asyncComputeThreadProc(p_Data->m_Context, p_Data->m_ThreadIndex);
-  }
-
-  ~ParticleSimData(){/* Just release ComPtrs */};
+  ~ParticleSimCtx(){/* Just release ComPtrs */};
 };
-// inline ParticleSimData* g_ParticleSim = nullptr;
-inline ParticleSimData* g_ParticleSim;
+//---------------------------------------------------------------------------//
+inline ParticleSimCtx* g_Ctx;
 //---------------------------------------------------------------------------//

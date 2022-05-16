@@ -120,7 +120,7 @@ struct CallBackRegistery;
 
 inline DemoInfo* g_DemoInfo = nullptr;
 inline HWND g_WinHandle = nullptr;
-inline CallBackRegistery* g_CallbackReg = nullptr;
+//inline CallBackRegistery* g_CallbackReg = nullptr;
 
 //---------------------------------------------------------------------------//
 // Helper functions:
@@ -584,4 +584,9 @@ public:
 private:
   const HRESULT m_hr;
 };
+//---------------------------------------------------------------------------//
+inline void setWindowTitle(LPCWSTR p_Text, const std::wstring& p_Title) {
+  std::wstring windowText = p_Title + L": " + p_Text;
+  SetWindowText(g_WinHandle, windowText.c_str());
+}
 //---------------------------------------------------------------------------//

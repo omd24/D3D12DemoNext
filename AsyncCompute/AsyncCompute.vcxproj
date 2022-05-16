@@ -154,7 +154,6 @@
     <ClInclude Include="DemoUtils.hpp" />
     <ClInclude Include="ParticleSimulation.hpp" />
     <ClInclude Include="Timer.hpp" />
-    <ClInclude Include="appExec.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />

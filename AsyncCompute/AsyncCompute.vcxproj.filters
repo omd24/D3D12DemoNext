@@ -6,9 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ParticleSimulation.hpp" />
-    <ClInclude Include="appExec.hpp">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.hpp">
       <Filter>Common</Filter>
     </ClInclude>
