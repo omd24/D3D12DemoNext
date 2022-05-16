@@ -1073,9 +1073,6 @@ static void _allocSimData() {
   DEBUG_BREAK(nullptr == g_Ctx);
   g_Ctx = reinterpret_cast<ParticleSimCtx*>(::malloc(sizeof(*g_Ctx)));
   ::memset(g_Ctx, 0, sizeof(*g_Ctx));
-
-  g_Ctx->m_ParticleCount = 10000;
-  g_Ctx->m_ParticleSpread = 400.0f;
 }
 //---------------------------------------------------------------------------//
 static void _deallocSimData() {
@@ -1091,18 +1088,18 @@ void onInit() {
   _allocSimData();
   DEBUG_BREAK(g_DemoInfo->m_IsInitialized);
 
+  ::memset(g_Ctx, 0, sizeof(*g_Ctx));
+
+  g_Ctx->m_ParticleCount = 10000;
+  g_Ctx->m_ParticleSpread = 400.0f;
+
   UINT width = g_DemoInfo->m_Width;
   UINT height = g_DemoInfo->m_Height;
-  g_Ctx->m_FrameIndex = 0;
   g_Ctx->m_Viewport = CD3DX12_VIEWPORT(
       0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
   g_Ctx->m_ScissorRect =
       CD3DX12_RECT(0, 0, static_cast<LONG>(width), static_cast<LONG>(height));
-  g_Ctx->m_RtvDescriptorSize = 0;
-  g_Ctx->m_SrvUavDescriptorSize = 0;
   g_Ctx->m_CbufferGSData = nullptr;
-  g_Ctx->m_RenderContextFenceValue = 0;
-  g_Ctx->m_Terminating = 0;
   setArrayToZero(g_Ctx->m_SrvIndex);
   setArrayToZero(g_Ctx->m_FrameFenceValues);
 

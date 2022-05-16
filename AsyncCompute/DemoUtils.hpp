@@ -12,6 +12,9 @@
 //---------------------------------------------------------------------------//
 //
 #pragma warning(disable : 28182) // pointer might be null
+#pragma warning(disable : 6387) // pointer might be 0
+#pragma warning(disable : 6001) // uninitialized memory
+#pragma warning(disable : 26439) // noexcept function
 
 //---------------------------------------------------------------------------//
 // Includes:
