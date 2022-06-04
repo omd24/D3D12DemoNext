@@ -30,7 +30,7 @@ void onKeyDown(UINT8);
 //---------------------------------------------------------------------------//
 void onKeyUp(UINT8);
 //---------------------------------------------------------------------------//
-#define FRAME_COUNT 2
+#define FRAME_COUNT 3
 #define THREAD_COUNT 1
 
 struct ParticleSimCtx {
@@ -49,47 +49,47 @@ struct ParticleSimCtx {
   };
 
   struct CbufferGS {
-    XMFLOAT4X4 m_WorldViewProjection;
-    XMFLOAT4X4 m_InverseView;
+    XMFLOAT4X4 m_Wvp;
+    XMFLOAT4X4 m_InvView;
 
     // Constant buffers are 256-byte aligned in GPU memory
     float padding[32];
   };
 
   struct CbufferCS {
-    UINT m_Param[4];
-    float m_ParamFloat[4];
+    UINT m_Params[4];
+    float m_ParamsFloat[4];
   };
 
   // Pipeline objects.
   CD3DX12_VIEWPORT m_Viewport;
   CD3DX12_RECT m_ScissorRect;
-  IDXGISwapChain3Ptr m_SwapChain;
-  ID3D12DevicePtr m_Device;
+  IDXGISwapChain3Ptr m_Swc;
+  ID3D12DevicePtr m_Dev;
   ID3D12ResourcePtr m_RenderTargets[FRAME_COUNT];
   UINT m_FrameIndex;
-  ID3D12CommandAllocatorPtr m_CommandAllocators[FRAME_COUNT];
-  ID3D12CommandQueuePtr m_CommandQueue;
-  ID3D12RootSignaturePtr m_RootSignature;
-  ID3D12RootSignaturePtr m_ComputeRootSignature;
+  ID3D12CommandAllocatorPtr m_CmdAllocs[FRAME_COUNT];
+  ID3D12CommandQueuePtr m_CmdQue;
+  ID3D12RootSignaturePtr m_RootSig;
+  ID3D12RootSignaturePtr m_CompRootSig;
   ID3D12DescriptorHeapPtr m_RtvHeap;
   ID3D12DescriptorHeapPtr m_SrvUavHeap;
   UINT m_RtvDescriptorSize;
   UINT m_SrvUavDescriptorSize;
 
   // Asset objects.
-  ID3D12PipelineStatePtr m_PipelineState;
-  ID3D12PipelineStatePtr m_ComputeState;
-  ID3D12GraphicsCommandListPtr m_CommandList;
-  ID3D12ResourcePtr m_VertexBuffer;
-  ID3D12ResourcePtr m_VertexBufferUpload;
-  D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
+  ID3D12PipelineStatePtr m_Pso;
+  ID3D12PipelineStatePtr m_CompPso;
+  ID3D12GraphicsCommandListPtr m_CmdList;
+  ID3D12ResourcePtr m_VtxBuffer;
+  ID3D12ResourcePtr m_VtxBufferUpload;
+  D3D12_VERTEX_BUFFER_VIEW m_VtxBufferView;
   ID3D12ResourcePtr m_ParticleBuffer0[THREAD_COUNT];
   ID3D12ResourcePtr m_ParticleBuffer1[THREAD_COUNT];
   ID3D12ResourcePtr m_ParticleBuffer0Upload[THREAD_COUNT];
   ID3D12ResourcePtr m_ParticleBuffer1Upload[THREAD_COUNT];
   ID3D12ResourcePtr m_CbufferGS;
-  UINT8* m_CbufferGSData;
+  UINT8* m_CbufferGSDataPtr;
   ID3D12ResourcePtr m_CbufferCS;
 
   UINT m_SrvIndex[THREAD_COUNT]; // Denotes which of the particle buffer
@@ -101,9 +101,9 @@ struct ParticleSimCtx {
   Timer m_Timer;
 
   // Compute objects.
-  ID3D12CommandAllocatorPtr m_ComputeAllocator[THREAD_COUNT];
-  ID3D12CommandQueuePtr m_ComputeCommandQueue[THREAD_COUNT];
-  ID3D12GraphicsCommandListPtr m_ComputeCommandList[THREAD_COUNT];
+  ID3D12CommandAllocatorPtr m_CompAllocs[THREAD_COUNT];
+  ID3D12CommandQueuePtr m_CompCmdQues[THREAD_COUNT];
+  ID3D12GraphicsCommandListPtr m_CompCmdLists[THREAD_COUNT];
 
   // Synchronization objects.
   HANDLE m_SwapChainEvent;
@@ -143,11 +143,11 @@ struct ParticleSimCtx {
 
   // Indices of shader resources in the descriptor heap.
   enum DescriptorHeapIndex : UINT32 {
-    UavParticlePosVelo0 = 0,
-    UavParticlePosVelo1 = UavParticlePosVelo0 + THREAD_COUNT,
-    SrvParticlePosVelo0 = UavParticlePosVelo1 + THREAD_COUNT,
-    SrvParticlePosVelo1 = SrvParticlePosVelo0 + THREAD_COUNT,
-    DescriptorCount = SrvParticlePosVelo1 + THREAD_COUNT
+    UavParticlePosVel0 = 0,
+    UavParticlePosVel1 = UavParticlePosVel0 + THREAD_COUNT,
+    SrvParticlePosVel0 = UavParticlePosVel1 + THREAD_COUNT,
+    SrvParticlePosVel1 = SrvParticlePosVel0 + THREAD_COUNT,
+    DescriptorCount = SrvParticlePosVel1 + THREAD_COUNT
   };
 
   ~ParticleSimCtx(){/* Just release ComPtrs */};

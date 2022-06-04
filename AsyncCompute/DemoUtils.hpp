@@ -15,6 +15,7 @@
 #pragma warning(disable : 6387) // pointer might be 0
 #pragma warning(disable : 6001) // uninitialized memory
 #pragma warning(disable : 26439) // noexcept function
+#pragma warning(disable : 26812) // unscoped enum
 
 //---------------------------------------------------------------------------//
 // Includes:

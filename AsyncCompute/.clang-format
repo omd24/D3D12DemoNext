@@ -1,6 +1,8 @@
-BasedOnStyle: LLVM
+BasedOnStyle: LLVM   
+BreakBeforeBraces: Attach
+AlignAfterOpenBracket: BAS_BlockIndent 
 IndentWidth: 2
-ConstructorInitializerIndentWidth: 4
+ConstructorInitializerIndentWidth: 2
 BreakBeforeBraces: Custom
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 BraceWrapping:
@@ -10,7 +12,7 @@ BraceWrapping:
   AfterEnum:       false
   AfterFunction:   false
   AfterNamespace:  false
-  AfterObjCDeclaration: true
+  AfterObjCDeclaration: false
   AfterStruct:     false
   AfterUnion:      false
   BeforeCatch:     false
